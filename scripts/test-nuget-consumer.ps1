@@ -39,12 +39,20 @@ function Invoke-Dotnet([string[]]$Arguments) {
     if ($LASTEXITCODE -ne 0) { throw "dotnet failed ($LASTEXITCODE)" }
 }
 $properties = @("-p:LabTestingPackageVersion=$Version", "-p:SL_REFERENCES=$Managed")
-Invoke-Dotnet (@('restore', $consumer, '--configfile', $config, '--packages', "$cache/packages") + $properties)
-Invoke-Dotnet (@('build', $consumer, '--no-restore', '-c', 'Release') + $properties)
-Invoke-Dotnet (@('build', $consumer, '--no-restore', '-c', 'Release', '-t:LabTestingSelfTest') + $properties)
-if ($RunServer) {
-    if (!$Server) { throw 'Pass -Server when using -RunServer.' }
-    Invoke-Dotnet (@('build', $consumer, '--no-restore', '-c', 'Release', '-t:LabTestingList', "-p:LabTestingServer=$Server") + $properties)
-    Invoke-Dotnet (@('build', $consumer, '--no-restore', '-c', 'Release', '-t:LabTesting', "-p:LabTestingServer=$Server") + $properties)
+if ($RunServer -and !$Server) { throw 'Pass -Server when using -RunServer.' }
+try {
+    Invoke-Dotnet (@('restore', $consumer, '--configfile', $config, '--packages', "$cache/packages") + $properties)
+    Invoke-Dotnet (@('build', $consumer, '--no-restore', '-c', 'Release') + $properties)
+    Invoke-Dotnet (@('build', $consumer, '--no-restore', '-c', 'Release', '-t:LabTestingSelfTest') + $properties)
+    if ($RunServer) {
+        Invoke-Dotnet (@('build', $consumer, '--no-restore', '-c', 'Release', '-t:LabTestingList', "-p:LabTestingServer=$Server") + $properties)
+        Invoke-Dotnet (@('build', $consumer, '--no-restore', '-c', 'Release', '-t:LabTesting', "-p:LabTestingServer=$Server") + $properties)
+    }
+} finally {
+    # The consumer restore rewrites obj/ for every project of the graph, SamplePlugin included, and
+    # points it at this throwaway cache. Drop the cache and put the solution back on the usual one,
+    # otherwise the IDE stops resolving SamplePlugin's packages once the cache is gone.
+    Remove-Item -Recurse -Force -LiteralPath $cache -ErrorAction SilentlyContinue
+    & dotnet restore "$repository/LabTesting.slnx" | Out-Null
 }
-Write-Output "NuGet consumer validated from a fresh cache: $cache"
+Write-Output 'NuGet consumer validated from a fresh cache.'
