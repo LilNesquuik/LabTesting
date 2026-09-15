@@ -32,8 +32,8 @@ et sans aucun chemin vers les sources de LabTesting :
 | `-t:LabTestingList` | 4 découverts, sortie 0 | 4 découverts, sortie 0 |
 | `-t:LabTesting` sur serveur réel 14.2.7 | **4/4 réussis** | **4/4 réussis** |
 
-Rapports : `TestResults/nuget/20260915-154344-…` (Windows) et
-`20260915-154644-…` (Ubuntu). Les deux rapportent LabAPI 1.1.7 et Harmony 2.3.6,
+Rapports : `TestResults/nuget/20260915-160006-…` (Windows) et
+`20260915-160309-…` (Ubuntu). Les deux rapportent LabAPI 1.1.7 et Harmony 2.3.6,
 identiques au flux par archive. Sous Linux, le SDK .NET 10 et PowerShell 7.4.6
 portables ont été installés dans `~/.cache/`, sans droits root.
 
