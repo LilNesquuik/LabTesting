@@ -29,6 +29,8 @@ jobs:
           mkdir -p "$steam"
           curl --fail --location --retry 3 https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz -o "$steam/steamcmd.tar.gz"
           tar -xzf "$steam/steamcmd.tar.gz" -C "$steam"
+          # A fresh SteamCMD self-updates on its first run and exits before applying app_update.
+          "$steam/steamcmd.sh" +quit >/dev/null || true
           "$steam/steamcmd.sh" +force_install_dir "$GITHUB_WORKSPACE/.server" +login anonymous +app_update 996560 validate +quit
           test -f "$SL_REFERENCES/Assembly-CSharp.dll"
       # Add dependency fetch/build steps here when the tested plugin needs them.
