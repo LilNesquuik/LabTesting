@@ -29,9 +29,15 @@ jobs:
           mkdir -p "$steam"
           curl --fail --location --retry 3 https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz -o "$steam/steamcmd.tar.gz"
           tar -xzf "$steam/steamcmd.tar.gz" -C "$steam"
-          # A fresh SteamCMD self-updates on its first run and exits before applying app_update.
+          # A fresh SteamCMD self-updates on its first run and exits before applying app_update,
+          # and app_update itself fails transiently after login. Warm it up, then retry.
           "$steam/steamcmd.sh" +quit >/dev/null || true
-          "$steam/steamcmd.sh" +force_install_dir "$GITHUB_WORKSPACE/.server" +login anonymous +app_update 996560 validate +quit
+          for attempt in 1 2 3; do
+            "$steam/steamcmd.sh" +login anonymous +force_install_dir "$GITHUB_WORKSPACE/.server" +app_update 996560 validate +quit || true
+            test -f "$SL_REFERENCES/Assembly-CSharp.dll" && break
+            echo "SteamCMD attempt $attempt installed nothing." >&2
+            sleep 15
+          done
           test -f "$SL_REFERENCES/Assembly-CSharp.dll"
       # Add dependency fetch/build steps here when the tested plugin needs them.
       - name: Restore, build and test

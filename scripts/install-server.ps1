@@ -13,9 +13,10 @@ $marker = Join-Path $Server 'SCPSL_Data/Managed/Assembly-CSharp.dll'
 # app_update, reporting "Missing configuration". Let it update alone, then ask for the app.
 & $exe +quit | Out-Null
 foreach ($attempt in 1..3) {
-    & $exe +force_install_dir $Server +login anonymous +app_update 996560 validate +quit
+    & $exe +login anonymous +force_install_dir $Server +app_update 996560 validate +quit
     # SteamCMD exit codes are unreliable across versions: trust the installed assemblies instead.
     if (Test-Path -LiteralPath $marker) { return }
     Write-Warning "SteamCMD attempt $attempt left no managed assemblies in $Server."
+    Start-Sleep -Seconds 15
 }
 throw "SteamCMD could not install app 996560 into $Server."
