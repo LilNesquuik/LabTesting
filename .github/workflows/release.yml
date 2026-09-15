@@ -13,9 +13,11 @@ permissions:
 jobs:
   validate:
     uses: ./.github/workflows/server-validation.yml
+  # Windows only: the net48 harness needs the .NET Framework reference assemblies, which a Linux
+  # runner does not have. package.ps1 still produces both the win-x64 and linux-x64 runners.
   package:
     needs: validate
-    runs-on: ubuntu-24.04
+    runs-on: windows-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -23,10 +25,8 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - name: Install server
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y lib32gcc-s1 lib32stdc++6
-          bash scripts/install-server.sh "$GITHUB_WORKSPACE/.server" "$RUNNER_TEMP/labtesting-steamcmd"
+        shell: pwsh
+        run: ./scripts/install-server.ps1 -Server "$env:GITHUB_WORKSPACE/.server" -SteamCmd "$env:RUNNER_TEMP/labtesting-steamcmd"
       - name: Build distributions
         shell: pwsh
         env:

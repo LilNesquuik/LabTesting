@@ -143,6 +143,25 @@ des assemblies plutôt que sur le code de sortie.
 
 ## Limites connues
 
+- **Le harnais net48 ne se compile que sous Windows.** `src/LabTesting` référence les
+  assemblies du jeu, dont 13 façades `System.*` absentes des deux serveurs : sous
+  Windows elles se résolvent depuis les `Facades/` du framework, un runner Linux
+  n'a aucun pack de ciblage de secours et échoue en `CS1069` sur `Queue<>`. Ajouter
+  `Microsoft.NETFramework.ReferenceAssemblies`, retirer le `mscorlib` ou le
+  `netstandard` du jeu ne suffit pas ; les quatre combinaisons ont été essayées.
+  `server-validation.yml` et `release.yml` construisent donc le net48 sur
+  `windows-latest` et exécutent les DLL obtenues sur les deux systèmes.
+  **Cela ne concerne pas les plugins consommateurs** : un projet de tests net48
+  ordinaire se compile sans problème sous Linux, comme le prouve
+  `examples/NuGetPlugin.Tests` dans la matrice `nuget-release.yml`.
+- Le harnais est compilé contre le `Managed` du serveur Windows puis chargé par
+  celui du serveur Linux. 123 des 140 DLL communes diffèrent octet pour octet — des
+  builds Unity distincts — sans écart d'API observé jusqu'ici. Comme le harnais
+  publicise `Assembly-CSharp` et se lie à des membres internes, un écart se
+  manifesterait à l'exécution, pas à la compilation : d'où l'exécution systématique
+  de la suite sous Ubuntu en CI. Tous les serveurs SCP:SL de production tournent
+  sous Linux, c'est donc la plateforme d'exécution qui compte.
+
 - SIGKILL/panne de machine ne permet pas un finally ni un téléversement garanti ;
   utiliser le nettoyage de secours et des runners CI éphémères.
 - Les plugins qui écrivent sur des chemins absolus ou lancent des démons détachés

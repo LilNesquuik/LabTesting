@@ -87,8 +87,16 @@ jusqu'à l'exécution de confiance réussie.
 ## CI du framework
 
 `runner.yml` compile et exécute les vérifications sans jeu sur Ubuntu et Windows.
-`server-validation.yml` lance le même plugin d'exemple sur les deux systèmes
+`server-validation.yml` construit d'abord les assemblies net48 sur `windows-latest`,
+les publie en artefact, puis lance le même plugin d'exemple sur Ubuntu et Windows
 avec une installation SteamCMD réelle. Il est manuel et réutilisable.
+
+Le net48 n'est construit que sous Windows parce que le dossier `Managed` du jeu ne
+contient pas les façades `System.*` du framework et qu'un runner Linux n'a aucun
+pack de ciblage pour les fournir. Les DLL construites sous Windows sont celles
+exécutées sous Linux, ce qui correspond à la réalité de production : les serveurs
+SCP:SL tournent sous Linux. Cette contrainte est propre au harnais ; le projet de
+tests d'un plugin se compile normalement sous Linux.
 `release.yml` prépare les archives versionnées et crée un **brouillon** sur tag ;
 publier le brouillon après examen des résultats. `nuget-release.yml` construit le
 package, le valide sur Windows et Ubuntu avec un serveur réel, puis le publie sur

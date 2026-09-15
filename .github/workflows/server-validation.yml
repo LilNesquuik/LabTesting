@@ -5,12 +5,12 @@ on:
 permissions:
   contents: read
 jobs:
-  real-server:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-24.04, windows-latest]
-    runs-on: ${{ matrix.os }}
+  # The net48 assemblies are built on Windows only. The game's Managed folder ships no .NET
+  # Framework facades, and a Linux runner has no targeting pack to fall back on, so the harness
+  # cannot compile there. Every SCP:SL server runs on Linux, so the DLLs produced here are
+  # exactly the ones the matrix below executes on Debian-family runners.
+  build:
+    runs-on: windows-latest
     timeout-minutes: 30
     env:
       SL_REFERENCES: ${{ github.workspace }}/.server/SCPSL_Data/Managed
@@ -20,6 +20,44 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
+      - name: Install server for build references
+        shell: pwsh
+        run: ./scripts/install-server.ps1 -Server "$env:GITHUB_WORKSPACE/.server" -SteamCmd "$env:RUNNER_TEMP/labtesting-steamcmd"
+      - name: Build the net48 assemblies
+        shell: pwsh
+        run: |
+          dotnet build src/LabTesting -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Harness build failed' }
+          dotnet build examples/SamplePlugin.Tests -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Sample build failed' }
+          dotnet build tests/FailureSuite -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Failure suite build failed' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: net48-assemblies
+          path: |
+            src/LabTesting/bin/Release/net48/
+            examples/SamplePlugin/bin/Release/net48/
+            examples/SamplePlugin.Tests/bin/Release/net48/
+            tests/FailureSuite/bin/Release/net48/
+          if-no-files-found: error
+  real-server:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/download-artifact@v4
+        with:
+          name: net48-assemblies
+          path: .
       - name: Install Linux server
         if: runner.os == 'Linux'
         run: |
@@ -29,19 +67,13 @@ jobs:
       - name: Install Windows server
         if: runner.os == 'Windows'
         shell: pwsh
-        run: |
-          ./scripts/install-server.ps1 -Server "$env:GITHUB_WORKSPACE/.server" -SteamCmd "$env:RUNNER_TEMP/labtesting-steamcmd"
-      - name: Build
+        run: ./scripts/install-server.ps1 -Server "$env:GITHUB_WORKSPACE/.server" -SteamCmd "$env:RUNNER_TEMP/labtesting-steamcmd"
+      # The runner targets net10 and builds anywhere; only the net48 payload comes from Windows.
+      - name: Build the runner and stage the harness
         shell: pwsh
         run: |
-          dotnet build src/LabTesting -c Release
-          if ($LASTEXITCODE -ne 0) { throw 'Harness build failed' }
           dotnet build src/LabTesting.Runner -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Runner build failed' }
-          dotnet build examples/SamplePlugin.Tests -c Release
-          if ($LASTEXITCODE -ne 0) { throw 'Sample build failed' }
-          dotnet build tests/FailureSuite -c Release
-          if ($LASTEXITCODE -ne 0) { throw 'Failure suite build failed' }
           New-Item -ItemType Directory -Force -Path .labtesting/harness | Out-Null
           Copy-Item src/LabTesting/bin/Release/net48/LabTesting.dll,src/LabTesting/bin/Release/net48/0Harmony.dll .labtesting/harness
       - name: Discover external suite
