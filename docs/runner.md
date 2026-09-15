@@ -1,139 +1,136 @@
-# Runner : configuration, isolation et résultats
+# Runner: configuration, isolation and results
 
 ## Interface
 
 ```text
 labtest run|list --config labtesting.json
-  --server DIR              installation source
-  --server-executable FILE  natif explicite (relatif à server, ou absolu)
+  --server DIR              source installation
+  --server-executable FILE  explicit native binary (relative to server, or absolute)
   --port N                  UDP/TCP, 1..65535
-  --timeout N               secondes, 1..86400
-  --reports DIR             parent des rapports persistants
-  --work DIR                parent des copies temporaires
-  --assembly NAME           filtre exact, répétable
-  --collection NAME         filtre exact, répétable
-  --test ID                 filtre exact, répétable
-  --framework-tests         ajoute les tests internes
+  --timeout N               seconds, 1..86400
+  --reports DIR             parent of the persistent reports
+  --work DIR                parent of the temporary copies
+  --assembly NAME           exact filter, repeatable
+  --collection NAME         exact filter, repeatable
+  --test ID                 exact filter, repeatable
+  --framework-tests         adds the framework's own tests
   --fail-on-skipped
-  --keep                    conserve la copie après exécution
+  --keep                    keeps the copy after the run
 labtest --selftest
 ```
 
-`--plugin LabTesting.dll` est conservé pour les suites internes lancées sans JSON.
-`--force` a été supprimé : aucun fichier existant ne doit être écrasé.
-Codes : **0** succès ; **1** assertion, exception de test ou skip refusé ;
-**2** erreur de runner, harnais, protocole, timeout, crash ou verdict incomplet.
-Le code de sortie du serveur ne suffit jamais à conclure au succès.
+`--plugin LabTesting.dll` is kept for framework suites launched without a JSON.
+`--force` was removed: no existing file may be overwritten.
+Exit codes: **0** success; **1** assertion, test exception or refused skip;
+**2** runner, harness, protocol, timeout, crash or incomplete-verdict error.
+The server's own exit code is never enough to conclude success.
 
-## Configuration JSON
+## JSON configuration
 
-Voir [l'exemple complet](../examples/labtesting.json).
-Les chemins dans le JSON sont relatifs au **fichier JSON** ; les chemins CLI
-`--server`, `--reports` et `--work` sont relatifs au terminal.
-`serverExecutable` est relatif au dossier serveur.
-Les propriétés inconnues sont rejetées pour détecter les fautes de frappe.
-Les listes contiennent des fichiers explicites, sans glob implicite.
+See [the complete example](../examples/labtesting.json).
+Paths inside the JSON are relative to the **JSON file**; the `--server`,
+`--reports` and `--work` CLI paths are relative to the shell.
+`serverExecutable` is relative to the server directory.
+Unknown properties are rejected, so typos surface.
+The lists hold explicit files, with no implicit globbing.
 
-| Champ | Utilisation |
+| Field | Use |
 |---|---|
-| server, serverExecutable | Installation et exécutable natif |
+| server, serverExecutable | Installation and native binary |
 | harness | LabTesting.dll |
-| tests | Bibliothèques de tests |
-| plugins | Plugin testé et plugins requis |
-| dependencies | Bibliothèques partagées |
-| files | Source, root et target relatifs |
-| serverSettings | Paires texte pour config_gameplay.txt |
-| assemblies | Noms simples d'assemblies sélectionnées |
-| collections | Noms exacts de collections |
-| testNames | Identifiants complets affichés par list |
-| frameworkTests | false par défaut |
-| failOnSkipped | false par défaut ; true recommandé en CI |
-| port, timeoutSeconds, tickrate | 7777, 600, 60 par défaut |
-| reports, work, keep | Stockage et conservation |
+| tests | Test libraries |
+| plugins | Plugin under test and required plugins |
+| dependencies | Shared libraries |
+| files | Relative source, root and target |
+| serverSettings | Text pairs for config_gameplay.txt |
+| assemblies | Simple names of the selected assemblies |
+| collections | Exact collection names |
+| testNames | Full identifiers as printed by list |
+| frameworkTests | false by default |
+| failOnSkipped | false by default; true recommended in CI |
+| port, timeoutSeconds, tickrate | 7777, 600, 60 by default |
+| reports, work, keep | Storage and retention |
 
-Les filtres se combinent par intersection ; plusieurs valeurs d'un même filtre
-forment une union. Un filtre inexistant échoue. Chaque assembly externe
-sélectionnée doit produire au moins un test. Pour sélectionner une seule
-assembly d'un ensemble, renseigner également `assemblies`.
+Filters combine as an intersection; several values of one filter form a union.
+A filter matching nothing fails. Every selected external assembly must yield at
+least one test. To select a single assembly out of a set, also fill in
+`assemblies`.
 
-Les identifiants ont la forme `Assembly:Namespace.Fixture.Methode`.
-Les lignes de théorie ont un suffixe `(index)`. Les collisions d'identifiant,
-de destination (y compris différences de casse) et de nom simple d'assembly
-sont rejetées. Les chemins absolus, traversées `..` et DLL dissimulées dans
-`files` sont interdits. Les fichiers d'infrastructure, la sentinelle et
-`config_sharing.txt` sont réservés.
+Identifiers look like `Assembly:Namespace.Fixture.Method`. Theory rows carry an
+`(index)` suffix. Collisions on an identifier, on a destination (including
+case-only differences) and on an assembly's simple name are rejected. Absolute
+paths, `..` traversal and DLLs hidden inside `files` are forbidden. The
+infrastructure files, the sentinel and `config_sharing.txt` are reserved.
 
-## Isolation de chaque lancement
+## Isolating each run
 
-Le runner crée un enfant unique `labtest-<date>-<uuid>` du dossier de travail.
-Il copie les ressources natives du serveur et ses répertoires de runtime,
-sans reprendre AppData ni la politique locale. Il refuse les liens symboliques
-dans l'installation source. Il lance le natif depuis **cette installation copiée** :
-`ConfigTemplates/` y est donc disponible.
+The runner creates a unique `labtest-<date>-<uuid>` child of the work directory.
+It copies the server's native resources and its runtime directories, without
+carrying over AppData or the local policy. It refuses symbolic links inside the
+source installation. It launches the native binary from **that copied
+installation**, so `ConfigTemplates/` is available there.
 
-`hoster_policy.txt` active `gamedir_for_configs: true`. LabAPI utilise alors :
+`hoster_policy.txt` enables `gamedir_for_configs: true`. LabAPI then uses:
 
 ```text
-<copie>/AppData/SCP Secret Laboratory/LabAPI/
-  plugins/<port>/       harnais et plugins déclarés
-  dependencies/<port>/ dépendances déclarées
-  configs/<port>/      configurations déclarées
+<copy>/AppData/SCP Secret Laboratory/LabAPI/
+  plugins/<port>/       harness and declared plugins
+  dependencies/<port>/  declared dependencies
+  configs/<port>/       declared configurations
 ```
 
-Le serveur reçoit un `-configpath` séparé, créé avant lancement, contenant
-`online_mode: false` et `LABTESTING_ENABLED`. L'ordre `-stdout` puis `-port`
-est conservé. Les variables usuelles de profil sont également redirigées vers
-la copie. Cela isole les chemins standard ; ce n'est **pas une sandbox de sécurité**
-contre un plugin qui écrit dans des chemins absolus ou contacte le réseau.
+The server gets a separate `-configpath`, created before launch, holding
+`online_mode: false` and `LABTESTING_ENABLED`. The `-stdout` then `-port` order is
+preserved. The usual profile variables are redirected to the copy as well. This
+isolates the standard paths; it is **not a security sandbox** against a plugin
+that writes to absolute paths or reaches the network.
 
-Un verrou exclusif par port coordonne les runners LabTesting ; un bind UDP et
-TCP détecte un port déjà utilisé. Un programme tiers peut toujours prendre le
-port entre la vérification et le bind du jeu : le verdict absent/incomplet fait
-alors échouer le lancement. Chaque worker doit utiliser son propre port.
+An exclusive per-port lock coordinates LabTesting runners; a UDP and TCP bind
+detects a port already in use. A third-party program can still take the port
+between that check and the game's own bind: the missing or incomplete verdict then
+fails the run. Each worker must use its own port.
 
-L'arrêt normal, le timeout, Ctrl+C et SIGTERM provoquent l'arrêt des descendants.
-Windows utilise un Job Object avec kill-on-close ; Linux un groupe de processus
-créé par `setsid`, en complément de l'arrêt de l'arbre. `-id<PID>` relie aussi
-le serveur au runner. Un enfant qui se détache volontairement peut sortir du
-groupe Linux : utiliser une machine ou un conteneur éphémère pour les plugins
-qui lancent des démons.
+A normal shutdown, a timeout, Ctrl+C and SIGTERM all stop the descendants. Windows
+uses a Job Object with kill-on-close; Linux uses a process group created by
+`setsid`, on top of stopping the tree. `-id<PID>` also ties the server to the
+runner. A child that deliberately detaches can escape the Linux group: use an
+ephemeral machine or container for plugins that spawn daemons.
 
-Aucun programme ne peut exécuter son `finally` après SIGKILL, panne de machine ou
-arrêt forcé du système. Le workflow possède un nettoyage `always()` de secours ;
-un runner GitHub hébergé est éphémère. Sur un agent Linux persistant,
-`python3 scripts/cleanup.py /chemin/.labtest-work` récupère les copies marquées
-abandonnées ; **ne pas lancer ce récupérateur sur des suites actives**.
-Sous Windows, le Job Object tue l'arbre à la fermeture forcée du runner, mais
-la copie disque doit être supprimée après avoir vérifié son marqueur.
-Les rapports ne sont jamais supprimés par le nettoyage des copies.
+No program can run its `finally` after SIGKILL, a machine failure or a forced
+system shutdown. The workflow has an `always()` fallback cleanup; a GitHub-hosted
+runner is ephemeral. On a persistent Linux agent,
+`python3 scripts/cleanup.py /path/.labtest-work` recovers copies marked abandoned;
+**do not run that recovery against active suites**. On Windows the Job Object
+kills the tree when the runner is forcibly closed, but the disk copy must be
+removed after checking its marker. Cleaning copies never deletes reports.
 
-## Découverte et protocole
+## Discovery and protocol
 
-`list` démarre le serveur, charge les plugins, découvre les tests et quitte
-sans démarrer la partie ni invoquer les fixtures. Il nécessite donc l'installation
-du jeu, comme `run`.
+`list` starts the server, loads the plugins, discovers the tests and exits without
+starting the round or invoking the fixtures. It therefore needs the game
+installed, just like `run`.
 
-Le harnais écrit et flush immédiatement :
+The harness writes and flushes immediately:
 
-1. Un objet `kind: plan` contenant tous les tests, collections, assemblies et versions.
-2. Un résultat par test : outcome, durées en ticks et millisecondes, isolation,
-   assertions, exceptions avalées et erreur éventuelle du harnais.
-3. Un unique `kind: summary` final.
+1. A `kind: plan` object holding every test, collection, assembly and version.
+2. One result per test: outcome, durations in ticks and milliseconds, isolation,
+   assertions, swallowed exceptions and any harness error.
+3. A single final `kind: summary`.
 
-Le runner utilise un parseur JSON strict et recalcule les compteurs à partir des
-résultats. Il exige l'égalité entre plan et résultats, l'absence de doublons,
-un résumé final cohérent et une sortie serveur nulle.
-En mode list, le plan doit être non vide et le résumé doit compter zéro résultat.
+The runner uses a strict JSON parser and recomputes the counters from the results.
+It requires plan and results to match, no duplicates, a consistent final summary
+and a zero server exit code. In list mode the plan must be non-empty and the
+summary must count zero results.
 
-## Rapports
+## Reports
 
-Chaque lancement conserve `stdout.log`, `stderr.log`, `deployment.json`,
-`labtesting-results.jsonl`, `junit.xml` et `summary.md` dans son dossier unique.
-Un échec avant le lancement peut ne produire que JUnit et Markdown ;
-un crash avant l'armement ne produit pas de JSONL.
-Le manifeste de déploiement contient identités et SHA-256 des fichiers copiés.
+Every run keeps `stdout.log`, `stderr.log`, `deployment.json`,
+`labtesting-results.jsonl`, `junit.xml` and `summary.md` in its own directory.
+A failure before launch may produce only JUnit and Markdown; a crash before the
+harness arms produces no JSONL. The deployment manifest holds the identities and
+SHA-256 of the copied files.
 
-JUnit conserve les détails JSON de chaque résultat et crée des erreurs explicites
-pour les cas absents et les erreurs d'infrastructure. Il reste exploitable après
-un crash ou une fin de ligne JSON tronquée. Le Markdown contient les résultats,
-durées, collections, détails d'échec et versions.
+JUnit keeps the JSON details of every result and creates explicit errors for
+missing cases and infrastructure failures. It stays usable after a crash or a
+truncated JSON line. The Markdown holds the results, durations, collections,
+failure details and versions.

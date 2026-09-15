@@ -27,9 +27,11 @@ Invoke-Dotnet @('publish', "$repository/src/LabTesting.Runner/LabTesting.Runner.
     '--self-contained', 'false', '-p:UseAppHost=false', "-p:Version=$Version", '-o', "$stage/runner")
 Invoke-Dotnet @("$stage/runner/labtest.dll", '--selftest')
 Copy-Item -LiteralPath "$repository/src/LabTesting/bin/Release/net48/LabTesting.dll",
+    "$repository/src/LabTesting/bin/Release/net48/LabTesting.pdb",
     "$repository/src/LabTesting/bin/Release/net48/0Harmony.dll" -Destination "$stage/harness"
 $files = @(
     @{ path = 'lib/net48/LabTesting.dll'; source = "$stage/harness/LabTesting.dll" }
+    @{ path = 'lib/net48/LabTesting.pdb'; source = "$stage/harness/LabTesting.pdb" }
     @{ path = 'tools/harness/LabTesting.dll'; source = "$stage/harness/LabTesting.dll" }
     @{ path = 'tools/harness/0Harmony.dll'; source = "$stage/harness/0Harmony.dll" }
     @{ path = 'tools/runner/labtest.dll'; source = "$stage/runner/labtest.dll" }

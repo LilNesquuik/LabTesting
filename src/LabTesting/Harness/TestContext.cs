@@ -210,7 +210,7 @@ public sealed class TestContext
         int afterTicks = ctx == null ? 0 : (int)(Pump.Tick - ctx.StartTick);
         ctx?.AddFailure(new Failure(assert, expected, observed, afterTicks, because));
 
-        string detail = assert + " : attendu " + expected + ", observé " + observed;
+        string detail = assert + ": expected " + expected + ", actual " + observed;
         if (!string.IsNullOrEmpty(because))
             detail += " — " + because;
         throw new AssertionAbort(detail);
@@ -255,8 +255,8 @@ public static class Swallowed
 
         TestContext.Fail(
             "Swallowed.AssertNone",
-            "aucune exception avalée",
-            errors.Count + " : " + errors[0].Message,
+            "no swallowed exception",
+            errors.Count + ": " + errors[0].Message,
             null);
     }
 }

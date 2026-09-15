@@ -1,8 +1,8 @@
 namespace LabTesting.Runner;
 
 /// <summary>
-/// Vérification exécutable du seul morceau de logique non trivial du runner : la lecture du JSONL
-/// et la dérivation du code de sortie. Tourne sans serveur — `labtest --selftest`.
+/// Executable check of the only non-trivial piece of runner logic: reading the JSONL
+/// and deriving the exit code. Runs without a server - `labtest --selftest`.
 /// </summary>
 internal static class SelfTest
 {
@@ -10,7 +10,7 @@ internal static class SelfTest
     {
         int failures = 0;
 
-        // Un test passé, avec un message contenant guillemets, antislash et saut de ligne.
+        // A passing test, with a message holding quotes, a backslash and a newline.
         const string passed =
             """
             {"id":"A.b","collection":"C","outcome":"passed","durationTicks":42,"isolation":"Dummies","escalated":false,"uptimeRound":3,"failures":[],"swallowed":[]}
@@ -20,49 +20,49 @@ internal static class SelfTest
         Check(ref failures, "outcome", "passed", Verdict.Field(passed, "outcome"));
         Check(ref failures, "durationTicks", 42, Verdict.Number(passed, "durationTicks"));
         Check(ref failures, "escalated", false, Verdict.Bool(passed, "escalated"));
-        Check(ref failures, "failures vides", 0, Verdict.Objects(passed, "failures").Count);
+        Check(ref failures, "empty failures", 0, Verdict.Objects(passed, "failures").Count);
 
         const string failed =
             """
-            {"id":"A.c","collection":"C","outcome":"failed","durationTicks":7,"isolation":"Round","escalated":true,"uptimeRound":4,"failures":[{"assert":"Eventually","expected":"Xp == 25","observed":"0","afterTicks":30,"because":"il dit \"non\" \\ jamais\nsuite"}],"swallowed":[{"source":"LabApi","message":"boom"}]}
+            {"id":"A.c","collection":"C","outcome":"failed","durationTicks":7,"isolation":"Round","escalated":true,"uptimeRound":4,"failures":[{"assert":"Eventually","expected":"Xp == 25","observed":"0","afterTicks":30,"because":"it says \"no\" \\ never\nnext"}],"swallowed":[{"source":"LabApi","message":"boom"}]}
             """;
 
-        Check(ref failures, "escalated vrai", true, Verdict.Bool(failed, "escalated"));
+        Check(ref failures, "escalated true", true, Verdict.Bool(failed, "escalated"));
 
         List<string> fails = Verdict.Objects(failed, "failures");
-        Check(ref failures, "1 échec", 1, fails.Count);
+        Check(ref failures, "1 failure", 1, fails.Count);
         if (fails.Count == 1)
         {
             Check(ref failures, "assert", "Eventually", Verdict.Field(fails[0], "assert"));
             Check(ref failures, "afterTicks", 30, Verdict.Number(fails[0], "afterTicks"));
-            Check(ref failures, "déséchappement", "il dit \"non\" \\ jamais\nsuite", Verdict.Field(fails[0], "because"));
+            Check(ref failures, "unescaping", "it says \"no\" \\ never\nnext", Verdict.Field(fails[0], "because"));
         }
 
         List<string> swallowed = Verdict.Objects(failed, "swallowed");
-        Check(ref failures, "1 avalée", 1, swallowed.Count);
+        Check(ref failures, "1 swallowed", 1, swallowed.Count);
         if (swallowed.Count == 1)
             Check(ref failures, "source", "LabApi", Verdict.Field(swallowed[0], "source"));
 
-        // Un accolade à l'intérieur d'une chaîne ne doit pas casser le découpage du tableau.
+        // A brace inside a string must not break how the array is split.
         const string tricky =
             """
-            {"id":"A.d","outcome":"failed","durationTicks":1,"failures":[{"assert":"X","expected":"{ pas un objet }","observed":"]","afterTicks":0}],"swallowed":[]}
+            {"id":"A.d","outcome":"failed","durationTicks":1,"failures":[{"assert":"X","expected":"{ not an object }","observed":"]","afterTicks":0}],"swallowed":[]}
             """;
 
         List<string> trickyFails = Verdict.Objects(tricky, "failures");
-        Check(ref failures, "accolade dans une chaîne", 1, trickyFails.Count);
+        Check(ref failures, "brace inside a string", 1, trickyFails.Count);
         if (trickyFails.Count == 1)
-            Check(ref failures, "expected littéral", "{ pas un objet }", Verdict.Field(trickyFails[0], "expected"));
+            Check(ref failures, "literal expected", "{ not an object }", Verdict.Field(trickyFails[0], "expected"));
 
-        // La clé ne doit pas être confondue avec un texte qui la contient.
+        // The key must not be confused with text that merely contains it.
         const string decoy =
             """
             {"id":"\"outcome\":\"passed\"","outcome":"failed","durationTicks":0,"failures":[],"swallowed":[]}
             """;
 
-        Check(ref failures, "clé leurre", "failed", Verdict.Field(decoy, "outcome"));
+        Check(ref failures, "decoy key", "failed", Verdict.Field(decoy, "outcome"));
 
-        // Dérivation du verdict.
+        // Deriving the verdict.
         Verdict all = Verdict.Parse(new[]
         {
             """{"kind":"plan","list":false,"tests":[{"id":"A.b","collection":"C"},{"id":"A.c","collection":"C"}]}""",
@@ -71,17 +71,17 @@ internal static class SelfTest
             """{"kind":"summary","passed":1,"failed":1,"skipped":0,"errors":0}"""
         });
 
-        Check(ref failures, "résumé présent", true, all.HasSummary);
-        Check(ref failures, "passés", 1, all.Passed);
-        Check(ref failures, "échoués", 1, all.Failed);
-        Check(ref failures, "lignes rendues", 2, all.Lines.Count);
-        Check(ref failures, "aucune erreur de protocole", 0, all.Problems.Count);
-        Check(ref failures, "code échec assertion", 1, all.ExitCode(false));
+        Check(ref failures, "summary present", true, all.HasSummary);
+        Check(ref failures, "passed", 1, all.Passed);
+        Check(ref failures, "failed", 1, all.Failed);
+        Check(ref failures, "rendered lines", 2, all.Lines.Count);
+        Check(ref failures, "no protocol error", 0, all.Problems.Count);
+        Check(ref failures, "assertion failure exit code", 1, all.ExitCode(false));
 
         const string plan = """{"kind":"plan","list":false,"tests":[{"id":"A.b","collection":"C"}]}""";
         const string summary = """{"kind":"summary","passed":1,"failed":0,"skipped":0,"errors":0}""";
         var valid = Verdict.Parse(new[] { plan, passed, summary });
-        Check(ref failures, "suite valide", 0, valid.ExitCode(false));
+        Check(ref failures, "valid suite", 0, valid.ExitCode(false));
         foreach (var corrupt in new[]
         {
             new[] { passed, summary },
@@ -94,18 +94,18 @@ internal static class SelfTest
             new[] { plan, passed, """{"kind":"summary","passed":1,"failed":0,"skipped":0,"errors":0,"harnessError":"teardown"}""" },
             new[] { """{"kind":"plan","list":false,"tests":[]}""", """{"kind":"summary","passed":0,"failed":0,"skipped":0,"errors":0}""" }
         })
-            Check(ref failures, "verdict corrompu rejeté", 2, Verdict.Parse(corrupt).ExitCode(false));
+            Check(ref failures, "corrupt verdict rejected", 2, Verdict.Parse(corrupt).ExitCode(false));
         var skip = Verdict.Parse(new[] { plan,
             """{"id":"A.b","collection":"C","outcome":"skipped","skip":"raison"}""",
             """{"kind":"summary","passed":0,"failed":0,"skipped":1,"errors":0}""" });
-        Check(ref failures, "skip accepté", 0, skip.ExitCode(false));
-        Check(ref failures, "skip refusé", 1, skip.ExitCode(true));
+        Check(ref failures, "skip accepted", 0, skip.ExitCode(false));
+        Check(ref failures, "skip rejected", 1, skip.ExitCode(true));
         var list = Verdict.Parse(new[] { plan.Replace("false", "true"),
             """{"kind":"summary","passed":0,"failed":0,"skipped":0,"errors":0}""" }, true);
         Check(ref failures, "list", 0, list.ExitCode(false));
         foreach (var path in new[] { "../escape", "a/../../escape", "/absolute", "C:\\escape", "a\\..\\escape" })
         {
-            try { Deployment.Under(Path.GetTempPath(), path); Check(ref failures, "traversée refusée", true, false); }
+            try { Deployment.Under(Path.GetTempPath(), path); Check(ref failures, "traversal rejected", true, false); }
             catch (ArgumentException) { }
         }
         string reports = Path.Combine(Path.GetTempPath(), "labtest-selftest-" + Guid.NewGuid().ToString("N"));
@@ -114,17 +114,17 @@ internal static class SelfTest
         {
             Verdict.Parse(new[] { plan }).WriteReports(reports);
             var xml = System.Xml.Linq.XDocument.Load(Path.Combine(reports, "junit.xml"));
-            Check(ref failures, "rapport partiel en erreur", true, xml.Descendants("error").Any());
+            Check(ref failures, "partial report in error", true, xml.Descendants("error").Any());
         }
         finally { Deployment.DeleteOwned(reports); }
         CheckProcessTree(ref failures);
 
         Verdict truncated = Verdict.Parse(new[] { passed });
-        Check(ref failures, "sans résumé", false, truncated.HasSummary);
+        Check(ref failures, "no summary", false, truncated.HasSummary);
 
         Console.WriteLine(failures == 0
-            ? "[labtest] selftest : tout passe."
-            : "[labtest] selftest : " + failures + " échec(s).");
+            ? "[labtest] selftest: every check passes."
+            : "[labtest] selftest: " + failures + " failure(s).");
 
         return failures == 0 ? 0 : 1;
     }
@@ -135,7 +135,7 @@ internal static class SelfTest
             return;
 
         failures++;
-        Console.Error.WriteLine("  ÉCHEC " + what + " : attendu <" + expected + ">, obtenu <" + actual + ">");
+        Console.Error.WriteLine("  FAILED " + what + ": expected <" + expected + ">, actual <" + actual + ">");
     }
 
     internal static System.Diagnostics.ProcessStartInfo SelfStart(string argument, bool session = false)
@@ -166,16 +166,16 @@ internal static class SelfTest
             int pid = int.Parse(parent.StandardOutput.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(10)).GetAwaiter().GetResult()!);
             child = System.Diagnostics.Process.GetProcessById(pid);
             containment.Dispose();
-            Check(ref failures, "processus parent arrêté", true, parent.WaitForExit(5000));
+            Check(ref failures, "parent process stopped", true, parent.WaitForExit(5000));
             // A dead orphan can remain a zombie briefly under WSL's init.
             bool zombie = OperatingSystem.IsLinux() && File.Exists("/proc/" + pid + "/status") &&
                 File.ReadLines("/proc/" + pid + "/status").Any(x => x.StartsWith("State:") && x.Contains('Z'));
-            Check(ref failures, "processus enfant arrêté", true, zombie || child.WaitForExit(5000));
+            Check(ref failures, "child process stopped", true, zombie || child.WaitForExit(5000));
         }
         catch (Exception e)
         {
             failures++;
-            Console.Error.WriteLine("ÉCHEC arrêt de l'arbre: " + e.Message);
+            Console.Error.WriteLine("FAILED to stop the process tree: " + e.Message);
         }
         finally
         {

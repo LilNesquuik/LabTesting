@@ -1,172 +1,184 @@
-# Relevé de validation — 15 septembre 2026
+# Validation record — 15 September 2026
 
-## Compilation et distributions
+## Builds and distributions
 
-- Harnais net48 et plugin d'exemple compilés sous Windows avec le SDK .NET 10.
-- Runner net10.0 compilé et publié en autonome pour win-x64 et linux-x64.
-- Archives finales générées dans `dist/final/` (ignoré par Git).
-- Les deux manifestes vérifiés : 198 fichiers par plateforme, SHA-256 conformes.
-- Assemblies du jeu exclues des distributions ; harnais et Harmony copiés par
-  liste autorisée. Le serveur utilisé est SCP:SL 14.2.7, LabAPI 1.1.7, Harmony 2.3.6.
-- Les sources net48 n'ont pas été recompilées dans Ubuntu pendant cette session :
-  les mêmes DLL compilées sous Windows ont été exécutées dans les deux jeux.
+- net48 harness and sample plugin built on Windows with the .NET 10 SDK.
+- net10.0 runner built and published self-contained for win-x64 and linux-x64.
+- Final archives produced in `dist/final/` (Git-ignored).
+- Both manifests verified: 198 files per platform, SHA-256 matching.
+- Game assemblies excluded from the distributions; harness and Harmony copied
+  through an allow-list. The server used is SCP:SL 14.2.7, LabAPI 1.1.7,
+  Harmony 2.3.6.
+- The net48 sources are never rebuilt on Linux: the same Windows-built DLLs run on
+  both systems. See the known limits.
 
-## Package NuGet
+## NuGet package
 
-Les vérifications ci-dessous ont porté sur un package numéroté 1.0.0 ; la première
-version publiée est **0.1.0**, que `nuget-release.yml` revalide à l'identique sur
-les deux systèmes avant publication.
+The checks below were run against a package numbered 1.0.0 during development;
+the first published version is **0.1.0**, and `nuget-release.yml` revalidates the
+same payload on both systems before publishing.
 
-`LabTesting.1.0.0.nupkg` construit par `scripts/pack-nuget.ps1` : 895 521 octets,
-16 entrées, contenu vérifié fichier par fichier par `scripts/verify-nuget.ps1`,
-SHA-256 écrit à côté. Payload : harnais net48 en `lib/net48` et `tools/harness`,
-Harmony 2.3.6, runner `labtest.dll` framework-dependent .NET 10, cibles MSBuild,
-`cleanup.py`, `manifest.json` et notices tierces. Aucune assembly du jeu, Unity
-ou LabAPI.
+`LabTesting.<version>.nupkg` is built by `scripts/pack-nuget.ps1`: contents checked
+file by file by `scripts/verify-nuget.ps1`, SHA-256 written next to it. Payload:
+the net48 harness under `lib/net48` and `tools/harness`, `LabTesting.pdb` with
+SourceLink data, Harmony 2.3.6, the framework-dependent .NET 10 `labtest.dll`
+runner, the MSBuild targets, `cleanup.py`, `manifest.json` and the third-party
+notices. No game, Unity or LabAPI assembly.
 
-Validation consommateur réelle sur les deux systèmes via
-`scripts/test-nuget-consumer.ps1`, avec un cache NuGet vierge à chaque lancement
-et sans aucun chemin vers les sources de LabTesting :
+Real consumer validation on both systems through
+`scripts/test-nuget-consumer.ps1`, with a clean NuGet cache on every run and no
+path whatsoever to the LabTesting sources:
 
-| Étape | Windows | Ubuntu 24.04, WSL2 |
+| Step | Windows | Ubuntu 24.04, WSL2 |
 |---|---|---|
-| Restauration du package depuis un dossier local | succès | succès |
-| Compilation de `examples/NuGetPlugin.Tests` en net48 | succès | succès |
-| `-t:LabTestingSelfTest` | succès | succès |
-| `-t:LabTestingList` | 4 découverts, sortie 0 | 4 découverts, sortie 0 |
-| `-t:LabTesting` sur serveur réel 14.2.7 | **4/4 réussis** | **4/4 réussis** |
+| Restore the package from a local directory | pass | pass |
+| Build `examples/NuGetPlugin.Tests` as net48 | pass | pass |
+| `-t:LabTestingSelfTest` | pass | pass |
+| `-t:LabTestingList` | 4 discovered, exit 0 | 4 discovered, exit 0 |
+| `-t:LabTesting` against a real 14.2.7 server | **4/4 passed** | **4/4 passed** |
 
-Rapports : `TestResults/nuget/20260915-160006-…` (Windows) et
-`20260915-160309-…` (Ubuntu). Les deux rapportent LabAPI 1.1.7 et Harmony 2.3.6,
-identiques au flux par archive. Sous Linux, le SDK .NET 10 et PowerShell 7.4.6
-portables ont été installés dans `~/.cache/`, sans droits root.
+Reports: `TestResults/nuget/20260915-160006-…` (Windows) and
+`20260915-160309-…` (Ubuntu). Both report LabAPI 1.1.7 and Harmony 2.3.6,
+identical to the archive flow. On Linux the portable .NET 10 SDK and
+PowerShell 7.4.6 were installed under `~/.cache/`, without root.
 
-`verify-nuget.ps1` a effectivement bloqué un package incomplet pendant cette
-session : `tools/cleanup.py`, requis par la cible `LabTestingCleanup`, manquait
-dans un package construit avant l'ajout de ce fichier. Le contrôle a échoué avant
-toute exécution de tests.
+`verify-nuget.ps1` did block an incomplete package during this work:
+`tools/cleanup.py`, required by the `LabTestingCleanup` target, was missing from a
+package built before that file was added. The check failed before any test ran.
 
-La même validation a tourné sur des runners GitHub, voir plus bas.
+The same validation ran on GitHub runners, see below.
 
-## Exécutions réelles locales
+## Real local runs
 
 | Validation | Windows | Ubuntu 24.04.4, WSL2 x64 |
 |---|---|---|
-| Plugin externe + assembly de tests explicite | 4/4, sortie 0 | 4/4, sortie 0 |
-| Tests internes du framework | 12/12, sortie 0 | 12/12, sortie 0 |
-| Runner autonome, tests sans jeu | succès | succès |
-| Arrêt d'un processus et de son enfant (selftest) | succès | succès |
-| Mode list sur le plugin d'exemple | 4 tests, aucun corps invoqué, sortie 0 | non exécuté séparément |
-| Timeout réel de 1 seconde | refus, rapports partiels conservés | non exécuté séparément |
-| Collision avec un port UDP occupé | refus avant lancement | non exécuté séparément |
-| Suite volontairement fautive | 7 résultats conformes | 7 résultats conformes |
+| External plugin plus an explicit test assembly | 4/4, exit 0 | 4/4, exit 0 |
+| The framework's own tests | 12/12, exit 0 | 12/12, exit 0 |
+| Standalone runner, game-free checks | pass | pass |
+| Stopping a process and its child (selftest) | pass | pass |
+| list mode on the sample plugin | 4 tests, no body invoked, exit 0 | not run separately |
+| Real 1-second timeout | refused, partial reports kept | not run separately |
+| Collision with a busy UDP port | refused before launch | not run separately |
+| Intentional failure suite | 7 matching results | 7 matching results |
 
-Les tests du plugin couvrent une assertion synchrone, la restauration d'un état
-statique par IAsyncLifetime, un invariant asynchrone, un joueur factice et un
-événement LabAPI. Aucun plugin personnel n'est déployé dans les copies.
+The plugin tests cover a synchronous assertion, static state restored through
+IAsyncLifetime, an asynchronous invariant, a dummy player and a LabAPI event. No
+personal plugin is deployed into the copies.
 
-Rapports locaux conservés sous `TestResults/` :
+Local reports kept under `TestResults/`:
 
-| Suite | Identifiant de lancement |
+| Suite | Run identifier |
 |---|---|
-| Framework Windows | 20260915-033237-0894885299e1477da91469d3755fe22f |
-| Plugin Windows | 20260915-035229-7353965d028f4bed9868956c580c150a |
-| List Windows corrigé | 20260915-034949-4456b37d696a4c479f800be98a68ca54 |
-| Plugin Ubuntu | 20260915-143101-95377ef1e00047729a459f7b75953d82 |
-| Framework Ubuntu | 20260915-144025-9416a24c9b204e19af98abb5d7e48a35 |
+| Framework, Windows | 20260915-033237-0894885299e1477da91469d3755fe22f |
+| Plugin, Windows | 20260915-035229-7353965d028f4bed9868956c580c150a |
+| list, Windows, after the fix | 20260915-034949-4456b37d696a4c479f800be98a68ca54 |
+| Plugin, Ubuntu | 20260915-143101-95377ef1e00047729a459f7b75953d82 |
+| Framework, Ubuntu | 20260915-144025-9416a24c9b204e19af98abb5d7e48a35 |
 
-Le premier essai de list avait révélé un arrêt trop précoce pendant FastMenu.
-Le harnais attend maintenant le chargement du lobby avant de quitter en mode list.
-Le nettoyage tolère également les verrous transitoires des DLL après la mort du
-processus et garde son marqueur de récupération jusqu'à la fin.
+The first list attempt exposed an exit that came too early during FastMenu. The
+harness now waits for the lobby to load before leaving list mode. The cleanup also
+tolerates transient DLL locks after the process dies and keeps its recovery marker
+until the end.
 
-La suite `tests/FailureSuite` a été compilée puis exécutée sur les deux systèmes.
-Elle vérifie une assertion fausse, une exception du corps, un skip, une exception
-avalée, un setup qui lève, un DisposeAsync qui lève et un Dispose qui lève.
-Résultat attendu et observé : **0 succès, 4 échecs, 1 ignoré, 2 erreurs**.
-Le code de sortie **2** a été confirmé explicitement sous Ubuntu avec l'archive
-finale (lancement 20260915-145227-2f117421cf7b4e71913ba4272d91a061).
-Le script `scripts/check-failure-suite.ps1` contrôle chaque identifiant et son
-outcome ; la CI valide aussi le code de sortie non nul attendu.
+The `tests/FailureSuite` suite was built and run on both systems. It covers a
+false assertion, an exception from the body, a skip, a swallowed exception, a
+setup that throws, a DisposeAsync that throws and a Dispose that throws. Expected
+and observed: **0 passed, 4 failed, 1 skipped, 2 errors**. Exit code **2** was
+confirmed explicitly on Ubuntu with the final archive (run
+20260915-145227-2f117421cf7b4e71913ba4272d91a061). `scripts/check-failure-suite.ps1`
+checks every identifier and its outcome; CI also asserts the expected non-zero
+exit code.
 
-## Vérifications sans jeu
+## Game-free checks
 
-`labtest --selftest` vérifie le parseur JSON, les échappements, les compteurs,
-le plan obligatoire, les résultats manquants ou dupliqués, le résumé final unique,
-le JSON tronqué, le plan vide, le harnessError, fail-on-skipped, list, les chemins
-de traversée refusés et les erreurs JUnit d'une exécution partielle.
-Il lance aussi un processus avec un enfant pour vérifier leur arrêt réel.
-Les archives finales passent cette commande sous Windows et Ubuntu.
+`labtest --selftest` covers the JSON parser, escaping, the counters, the mandatory
+plan, missing or duplicate results, the single final summary, truncated JSON, an
+empty plan, harnessError, fail-on-skipped, list mode, refused traversal paths and
+the JUnit errors of a partial run. It also starts a process with a child to check
+they are really stopped. The final archives pass this command on Windows and
+Ubuntu.
 
-Les six workflows/templates YAML ont été parsés avec PyYAML 6.0.1. Le script
-`scripts/check-workflows.py` vérifie aussi les entrées des workflow_call locaux.
-Cette vérification syntaxique ne remplace pas une exécution GitHub Actions.
+The eight YAML workflows and templates are parsed by `scripts/check-workflows.py`,
+which also checks the inputs of the local `workflow_call` entries. That syntax
+check does not replace a real GitHub Actions run.
 
-## GitHub Actions et publication
+## GitHub Actions and publication
 
-Dépôt : `LilNesquuik/LabTesting`, branche `master`.
+Repository: `LilNesquuik/LabTesting`, branch `master`.
 
-`Runner checks` (compilation et vérifications sans jeu, Ubuntu et Windows) passe sur
-chaque push depuis le commit initial.
+`Runner checks` — builds and game-free checks on Ubuntu and Windows — passes on
+every push since the initial commit.
 
-`Publish NuGet package` lancé en `workflow_dispatch` avec `publish: false`
-(run 34993885730, 15 septembre 2026) : **succès complet**.
+`Publish NuGet package`, run as `workflow_dispatch` with `publish: false`
+(run 34993885730): **fully green**.
 
-| Job | Résultat | Durée |
+| Job | Result | Duration |
 |---|---|---|
-| package (windows-latest) | succès, payload et SHA-256 vérifiés | 1 min 49 |
-| validate (ubuntu-24.04) | succès, 4/4 tests sur serveur réel | 1 min 32 |
-| validate (windows-latest) | succès, 4/4 tests sur serveur réel | 2 min 17 |
-| publish | sauté, comme attendu sans release | — |
+| package (windows-latest) | pass, payload and SHA-256 verified | 1 min 49 |
+| validate (ubuntu-24.04) | pass, 4/4 tests against a real server | 1 min 32 |
+| validate (windows-latest) | pass, 4/4 tests against a real server | 2 min 17 |
+| publish | skipped, as expected without a release | — |
 
-Le critère « dépôt vierge obtenant un résultat sur un runner Ubuntu GitHub » est
-donc confirmé de bout en bout : SteamCMD installe le serveur, NuGet restaure le
-package et la suite d'exemple s'exécute dans le jeu.
+`Build release distributions` for tag `v0.1.0` (run 34996667511): **fully green**,
+including `Real server validation`, which had never run on GitHub before.
 
-Le premier essai (run 34993397271) avait échoué sur
-`ERROR! Failed to install app '996560' (Missing configuration)` : un SteamCMD
-fraîchement téléchargé se met à jour au premier lancement et sort avant d'appliquer
-`app_update`. `scripts/install-server.ps1` et `install-server.sh` l'échauffent
-désormais avec un `+quit` à vide, réessaient et jugent le succès sur la présence
-des assemblies plutôt que sur le code de sortie.
+| Job | Result |
+|---|---|
+| validate / build (windows-latest) | pass, net48 assemblies published as an artifact |
+| validate / real-server (ubuntu-24.04) | pass, four suites against a real server |
+| validate / real-server (windows-latest) | pass, four suites against a real server |
+| package (windows-latest) | pass, both archives and SHA256SUMS |
+| release | pass, draft created |
 
-Étapes restantes :
+The "empty repository getting a result on a GitHub Ubuntu runner" criterion is
+therefore confirmed end to end: SteamCMD installs the server, NuGet restores the
+package and the sample suite runs inside the game.
 
-1. Déclarer la policy de trusted publishing sur nuget.org et le secret NUGET_USER.
-2. Créer un tag de release, examiner puis publier le brouillon généré ; la
-   publication déclenche la publication du package et exerce le chemin OIDC, que
-   le `workflow_dispatch` ne teste pas.
-3. Déclencher Real server validation, qui n'a pas encore tourné sur GitHub.
-4. Copier `nuget-tests.yml` dans un dépôt consommateur, renseigner le projet de
-   tests et la version du package, puis vérifier une PR et rendre le check obligatoire.
-5. Tester l'exemple privé avec un vrai dépôt dépendant et une PR de fork.
+Two CI failures were diagnosed and fixed along the way:
 
-## Limites connues
+- `ERROR! Failed to install app '996560' (Missing configuration)`. A freshly
+  downloaded SteamCMD updates itself on its first run and exits before applying
+  `app_update`, and `app_update` also fails transiently right after an anonymous
+  login. `scripts/install-server.ps1` and `install-server.sh` now warm it up with a
+  bare `+quit`, retry three times and judge success on the installed assemblies
+  rather than on an exit code that varies between versions.
+- `CS1069` on `Queue<>` when building the harness on Ubuntu. See the known limits.
 
-- **Le harnais net48 ne se compile que sous Windows.** `src/LabTesting` référence les
-  assemblies du jeu, dont 13 façades `System.*` absentes des deux serveurs : sous
-  Windows elles se résolvent depuis les `Facades/` du framework, un runner Linux
-  n'a aucun pack de ciblage de secours et échoue en `CS1069` sur `Queue<>`. Ajouter
-  `Microsoft.NETFramework.ReferenceAssemblies`, retirer le `mscorlib` ou le
-  `netstandard` du jeu ne suffit pas ; les quatre combinaisons ont été essayées.
-  `server-validation.yml` et `release.yml` construisent donc le net48 sur
-  `windows-latest` et exécutent les DLL obtenues sur les deux systèmes.
-  **Cela ne concerne pas les plugins consommateurs** : un projet de tests net48
-  ordinaire se compile sans problème sous Linux, comme le prouve
-  `examples/NuGetPlugin.Tests` dans la matrice `nuget-release.yml`.
-- Le harnais est compilé contre le `Managed` du serveur Windows puis chargé par
-  celui du serveur Linux. 123 des 140 DLL communes diffèrent octet pour octet — des
-  builds Unity distincts — sans écart d'API observé jusqu'ici. Comme le harnais
-  publicise `Assembly-CSharp` et se lie à des membres internes, un écart se
-  manifesterait à l'exécution, pas à la compilation : d'où l'exécution systématique
-  de la suite sous Ubuntu en CI. Tous les serveurs SCP:SL de production tournent
-  sous Linux, c'est donc la plateforme d'exécution qui compte.
+Remaining steps:
 
-- SIGKILL/panne de machine ne permet pas un finally ni un téléversement garanti ;
-  utiliser le nettoyage de secours et des runners CI éphémères.
-- Les plugins qui écrivent sur des chemins absolus ou lancent des démons détachés
-  exigent une isolation système complémentaire.
-- Dirty.Process ne recrée pas encore un serveur par test ; séparer ces tests en
-  invocations distinctes.
-- La référence AccessSubclasses 53 + 12 fournie dans la demande n'a pas été rejouée :
-  les tests externes de cette validation sont ceux du nouveau SamplePlugin.
+1. Declare the trusted publishing policy on nuget.org and the NUGET_USER secret.
+2. Publish the reviewed draft release; publishing triggers the package publication
+   and exercises the OIDC path, which `workflow_dispatch` does not test.
+3. Copy `nuget-tests.yml` into a consuming repository, fill in the test project and
+   the package version, then check a pull request and make the check required.
+4. Test the private-dependency example against a real dependent repository and a
+   fork pull request.
+
+## Known limits
+
+- **The net48 harness only builds on Windows.** `src/LabTesting` references the
+  game's assemblies, including 13 `System.*` facades present on neither server: on
+  Windows they resolve from the framework's `Facades/`, while a Linux runner has no
+  targeting pack to fall back on and fails with `CS1069` on `Queue<>`. Adding
+  `Microsoft.NETFramework.ReferenceAssemblies`, dropping the game's `mscorlib`,
+  dropping its `netstandard`, and dropping both were all tried and all fail the
+  same way. `server-validation.yml` and `release.yml` therefore build net48 on
+  `windows-latest` and run the resulting DLLs on both systems.
+  **This does not affect consuming plugins**: an ordinary net48 test project builds
+  fine on Linux, as `examples/NuGetPlugin.Tests` proves in the `nuget-release.yml`
+  matrix.
+- The harness is built against the Windows server's `Managed` directory and then
+  loaded by the Linux server's. 123 of the 140 shared DLLs differ byte for byte —
+  separate Unity builds — with no API difference observed so far. Since the harness
+  publicizes `Assembly-CSharp` and binds to internal members, a difference would
+  surface at runtime, not at build time: hence running the suite on Ubuntu in CI
+  every time. Every production SCP:SL server runs on Linux, so that is the platform
+  that matters.
+- SIGKILL or a machine failure allows neither a `finally` nor a guaranteed upload;
+  use the fallback cleanup and ephemeral CI runners.
+- Plugins writing to absolute paths or spawning detached daemons need additional
+  system-level isolation.
+- Dirty.Process does not yet recreate a server per test; split those tests into
+  separate invocations.
+- The AccessSubclasses 53 + 12 reference from the original request was not
+  replayed: the external tests in this record are the new SamplePlugin's.

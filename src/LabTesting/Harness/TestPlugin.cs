@@ -39,7 +39,7 @@ public sealed class TestPlugin : Plugin
     public override string Name => "LabTesting";
 
     /// <inheritdoc/>
-    public override string Description => "Harnais de tests in-process pour plugins LabAPI.";
+    public override string Description => "In-process test harness for LabAPI plugins.";
 
     /// <inheritdoc/>
     public override string Author => "LabTesting";
@@ -62,7 +62,7 @@ public sealed class TestPlugin : Plugin
         {
             // Refuse loudly but without throwing: the loader would only turn the exception into
             // a log line anyway (PluginLoader.cs:171-184), with a less readable message.
-            Logger.Warn("[LabTesting] chargement refusé — " + refusal);
+            Logger.Warn("[LabTesting] load refused - " + refusal);
             return;
         }
 
@@ -72,7 +72,7 @@ public sealed class TestPlugin : Plugin
         Pump.Install();
 
         string verdictPath = Path.Combine(new SuiteRequest().Reports, VerdictFileName);
-        Logger.Info("[LabTesting] harnais armé, verdict → " + verdictPath);
+        Logger.Info("[LabTesting] harness armed, verdict -> " + verdictPath);
 
         // Started without awaiting: the pump drives it forward. RunAll already catches its own
         // exceptions; the wrapper below is a last resort so nothing is lost silently.
@@ -104,7 +104,7 @@ public sealed class TestPlugin : Plugin
         }
         finally
         {
-            Logger.Info("[LabTesting] arrêt du serveur de test.");
+            Logger.Info("[LabTesting] shutting the test server down.");
             Shutdown.Quit();
         }
     }
@@ -127,17 +127,17 @@ public sealed class TestPlugin : Plugin
     private static string? Guard()
     {
         if (!ServerStatic.IsDedicated)
-            return "le serveur n'est pas dédié.";
+            return "the server is not dedicated.";
 
         if (ConfigFile.ServerConfig == null)
-            return "la configuration serveur n'est pas chargée.";
+            return "the server configuration is not loaded.";
 
         if (ConfigFile.ServerConfig.GetBool("online_mode", def: true))
-            return "online_mode est actif : un serveur de test doit tourner en online_mode: false.";
+            return "online_mode is enabled: a test server must run with online_mode: false.";
 
         string sentinel = Path.Combine(ConfigDirectory(), SentinelFileName);
         if (!File.Exists(sentinel))
-            return "fichier sentinelle absent (" + sentinel + ").";
+            return "sentinel file missing (" + sentinel + ").";
 
         return null;
     }

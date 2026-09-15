@@ -1,110 +1,108 @@
 # GitHub Actions
 
-## Template NuGet
+## NuGet template
 
-[nuget-tests.yml](../templates/github/nuget-tests.yml) est le template le plus
-simple : la version de LabTesting vit uniquement dans le `PackageReference` du
-projet de tests, il n'y a ni archive à télécharger ni SHA-256 à tenir à jour.
-Copier le fichier en `.github/workflows/tests.yml` et renseigner `TEST_PROJECT`.
-Le job installe les prérequis natifs et le serveur 996560, puis appelle
-`dotnet build -t:LabTesting` avec les propriétés `LabTestingServer`,
-`LabTestingReports`, `LabTestingWork` et `LabTestingTimeout`.
+[nuget-tests.yml](../templates/github/nuget-tests.yml) is the simplest template:
+LabTesting's version lives only in the test project's `PackageReference`, with no
+archive to download and no SHA-256 to keep up to date. Copy the file to
+`.github/workflows/tests.yml` and fill in `TEST_PROJECT`. The job installs the
+native prerequisites and the 996560 server, then calls `dotnet build -t:LabTesting`
+with the `LabTestingServer`, `LabTestingReports`, `LabTestingWork` and
+`LabTestingTimeout` properties.
 
-## Template public (archive autonome)
+## Public template (standalone archive)
 
-Copier [labtesting.yml](../templates/github/labtesting.yml) et
-[labtesting-reusable.yml](../.github/workflows/labtesting-reusable.yml) dans
-`.github/workflows/` du dépôt consommateur. Le premier déclenche la suite sur
-push, pull_request et workflow_dispatch. Le second expose `workflow_call` :
-checkout, .NET 10, prérequis natifs, SteamCMD 996560, distribution LabTesting,
-compilation, exécution bornée et publication des résultats.
+Copy [labtesting.yml](../templates/github/labtesting.yml) and
+[labtesting-reusable.yml](../.github/workflows/labtesting-reusable.yml) into the
+consuming repository's `.github/workflows/`. The first triggers the suite on push,
+pull_request and workflow_dispatch. The second exposes `workflow_call`: checkout,
+.NET 10, native prerequisites, SteamCMD 996560, the LabTesting distribution, the
+build, a bounded run and the published results.
 
-Remplacer :
+Replace:
 
-| Entrée | Valeur |
+| Input | Value |
 |---|---|
-| release-repository | propriétaire/dépôt public qui publie LabTesting |
-| release-version | version exacte sans v, par exemple 0.1.0 |
-| archive-sha256 | SHA-256 de l'archive Linux de cette version |
-| config | chemin du JSON, défaut examples/labtesting.json |
-| artifact-name | préfixe unique par appel parallèle du workflow, défaut labtesting |
-| build-command | commande de compilation du plugin et de ses tests |
-| dependency-build-command | commande optionnelle pour dépendances publiques ou privées |
+| release-repository | owner/repository publishing LabTesting |
+| release-version | exact version without v, for example 0.1.1 |
+| archive-sha256 | SHA-256 of that version's Linux archive |
+| config | path to the JSON, defaults to examples/labtesting.json |
+| artifact-name | unique prefix per parallel call, defaults to labtesting |
+| build-command | command building the plugin and its tests |
+| dependency-build-command | optional command for public or private dependencies |
 
-Le template n'a aucun secret obligatoire pour une release et des dépendances
-publiques. La release doit être publiée, pas en brouillon. Vérifier la somme de
-l'archive évite de faire confiance à une modification ultérieure du tag.
+The template needs no secret for a public release with public dependencies. The
+release must be published, not a draft. Checking the archive hash avoids trusting
+a later change to the tag.
 
-`SL_REFERENCES` et `EXILED_REFERENCES` pointent vers les assemblies fraîchement
-installées. Le build reçoit le harnais de la distribution via `LabTestingPath`.
-Adapter les références propres au plugin dans sa commande de build. Fixer les
-versions NuGet et les refs des dépendances ; SteamCMD installe la version publique
-courante du jeu, dont la version réelle apparaît dans le rapport.
+`SL_REFERENCES` and `EXILED_REFERENCES` point at the freshly installed assemblies.
+The build receives the distribution's harness through `LabTestingPath`. Adapt the
+plugin's own references in its build command. Pin NuGet versions and dependency
+refs; SteamCMD installs the current public build of the game, whose real version
+appears in the report.
 
-Pour plusieurs appels parallèles dans un même workflow, donner un artifact-name
-distinct à chacun. Les suites partageant une même machine doivent aussi utiliser
-des ports distincts dans leurs configurations.
+For several parallel calls in one workflow, give each a distinct artifact-name.
+Suites sharing a machine must also use distinct ports in their configurations.
 
-Le runner a un timeout de 600 secondes ; l'étape et le job ont des limites
-supérieures pour laisser au runner le temps de terminer et écrire ses rapports.
-Les logs et JUnit sont téléversés avec `if: always()`, le Markdown est ajouté
-au résumé GitHub, et un dernier nettoyage récupère les copies marquées.
-Une extinction brutale de la VM ne peut pas garantir le téléversement des fichiers.
+The runner has a 600-second timeout; the step and the job allow more, so the
+runner has time to finish and write its reports. Logs and JUnit are uploaded with
+`if: always()`, the Markdown is appended to the GitHub summary, and a final
+cleanup recovers the marked copies. An abrupt VM shutdown cannot guarantee the
+files are uploaded.
 
-Le workflow réutilisable peut aussi être appelé depuis un dépôt central :
+The reusable workflow can also be called from a central repository:
 `YOUR-ORG/LabTesting/.github/workflows/labtesting-reusable.yml@COMMIT_SHA`.
-Fixer ce commit et autoriser les reusable workflows dans les paramètres Actions.
+Pin that commit and allow reusable workflows in the Actions settings.
 
-## Dépendances privées
+## Private dependencies
 
-Utiliser [private-dependencies.yml](../templates/github/private-dependencies.yml).
-Renseigner `dependency-repository`, `dependency-ref` (SHA complet) et
-`dependency-build-command`. Déclarer ensuite les DLL résultantes dans le JSON,
-par exemple `../.dependencies/source/src/RequiredPlugin/bin/Release/net48/RequiredPlugin.dll`
-dans `plugins`. Une bibliothèque sans Plugin va dans `dependencies`.
+Use [private-dependencies.yml](../templates/github/private-dependencies.yml).
+Fill in `dependency-repository`, `dependency-ref` (full SHA) and
+`dependency-build-command`. Then declare the resulting DLLs in the JSON, for
+example `../.dependencies/source/src/RequiredPlugin/bin/Release/net48/RequiredPlugin.dll`
+under `plugins`. A library without a Plugin class goes under `dependencies`.
 
-Secret requis : **DEPENDENCY_TOKEN**, jeton avec lecture du dépôt privé concerné.
-Le checkout ne conserve pas les credentials. Le secret est transmis explicitement
-au workflow appelé et seulement à l'étape qui récupère la dépendance.
-La commande de build n'en a pas besoin.
+Required secret: **DEPENDENCY_TOKEN**, a token with read access to that private
+repository. The checkout does not persist credentials. The secret is passed
+explicitly to the called workflow and only to the step fetching the dependency.
+The build command does not need it.
 
-**PR de fork** : GitHub ne transmet pas les secrets ordinaires. La suite privée
-échoue explicitement avec un message d'accès indisponible ; elle n'est pas déclarée
-réussie ou remplacée par les tests internes. Ne pas utiliser `pull_request_target`
-pour exécuter du code de fork avec les secrets. Après revue du code, un mainteneur
-peut reprendre les changements sur une branche de confiance du dépôt principal.
-Pour conserver une couverture sur les forks, ajouter une suite publique indépendante.
+**Fork pull requests**: GitHub does not pass ordinary secrets. The private suite
+fails explicitly with an access-unavailable message; it is not declared successful
+and not replaced by the framework tests. Do not use `pull_request_target` to run
+fork code with the secrets. After reviewing the code, a maintainer can take the
+changes onto a trusted branch of the main repository. To keep coverage on forks,
+add an independent public suite.
 
-## Check obligatoire avant fusion
+## Required check before merging
 
-Exécuter une première PR pour faire apparaître le check, puis dans les règles de
-branche / ruleset activer « Require status checks to pass » et sélectionner le
-check de la suite (`integration / suite`, nom à confirmer dans la première PR).
-Exiger ce check sur les branches protégées ; ne pas ajouter de
-`continue-on-error`. Avec des dépendances privées, une PR de fork reste bloquée
-jusqu'à l'exécution de confiance réussie.
+Run a first pull request so the check appears, then in the branch rules or ruleset
+enable "Require status checks to pass" and select the suite's check
+(`integration / suite`, name to confirm on that first pull request). Require it on
+protected branches; do not add `continue-on-error`. With private dependencies, a
+fork pull request stays blocked until the trusted run succeeds.
 
-## CI du framework
+## The framework's own CI
 
-`runner.yml` compile et exécute les vérifications sans jeu sur Ubuntu et Windows.
-`server-validation.yml` construit d'abord les assemblies net48 sur `windows-latest`,
-les publie en artefact, puis lance le même plugin d'exemple sur Ubuntu et Windows
-avec une installation SteamCMD réelle. Il est manuel et réutilisable.
+`runner.yml` builds and runs the game-free checks on Ubuntu and Windows.
+`server-validation.yml` first builds the net48 assemblies on `windows-latest`,
+publishes them as an artifact, then runs the same sample plugin on Ubuntu and
+Windows against a real SteamCMD install. It is manual and reusable.
 
-Le net48 n'est construit que sous Windows parce que le dossier `Managed` du jeu ne
-contient pas les façades `System.*` du framework et qu'un runner Linux n'a aucun
-pack de ciblage pour les fournir. Les DLL construites sous Windows sont celles
-exécutées sous Linux, ce qui correspond à la réalité de production : les serveurs
-SCP:SL tournent sous Linux. Cette contrainte est propre au harnais ; le projet de
-tests d'un plugin se compile normalement sous Linux.
-`release.yml` prépare les archives versionnées et crée un **brouillon** sur tag ;
-publier le brouillon après examen des résultats. `nuget-release.yml` construit le
-package, le valide sur Windows et Ubuntu avec un serveur réel, puis le publie sur
-NuGet.org et GitHub Packages quand la release est publiée. NuGet.org utilise le
-trusted publishing OIDC : pas de clé d'API stockée, seulement le secret
-**NUGET_USER** et une policy déclarée sur nuget.org. Son `workflow_dispatch` avec
-`publish: false` fait tourner la validation seule.
+net48 is built on Windows only because the game's `Managed` directory does not
+carry the framework's `System.*` facades and a Linux runner has no targeting pack
+to supply them. The DLLs built on Windows are the ones executed on Linux, which
+matches production: SCP:SL servers run on Linux. The constraint is specific to the
+harness; a plugin's test project builds normally on Linux.
 
-Sources : [workflows réutilisables](https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations),
-[artefacts](https://docs.github.com/en/actions/tutorials/store-and-share-data),
-[secrets et forks](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository).
+`release.yml` prepares the versioned archives and creates a **draft** on a tag;
+publish the draft after reviewing the results. `nuget-release.yml` builds the
+package, validates it on Windows and Ubuntu against a real server, then publishes
+it to NuGet.org and GitHub Packages once the release is published. NuGet.org uses
+OIDC trusted publishing: no stored API key, only the **NUGET_USER** secret and a
+policy declared on nuget.org. Its `workflow_dispatch` with `publish: false` runs
+the validation alone.
+
+Sources: [reusable workflows](https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations),
+[artifacts](https://docs.github.com/en/actions/tutorials/store-and-share-data),
+[secrets and forks](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository).

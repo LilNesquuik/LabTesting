@@ -1,26 +1,26 @@
 # LabTesting
 
-Un seul package pour tester un plugin LabAPI dans un vrai serveur SCP:SL sous
-Windows et Linux. Il contient le harnais net48, Harmony 2.3.6, le runner portable
-.NET 10 et les cibles MSBuild. Installer le SDK .NET 10 et le serveur dédié
-SteamCMD 996560 séparément.
+One package to test a LabAPI plugin inside a real SCP:SL server, on Windows and
+Linux. It carries the net48 harness, Harmony 2.3.6, the portable .NET 10 runner
+and the MSBuild targets. Install the .NET 10 SDK and the SteamCMD dedicated
+server 996560 separately.
 
-Dans le projet de tests net48 :
+In the net48 test project:
 
 ```xml
-<PackageReference Include="LabTesting" Version="0.1.0" PrivateAssets="all" />
+<PackageReference Include="LabTesting" Version="0.1.1" PrivateAssets="all" />
 ```
 
-Utiliser la version publiée choisie. La restauration NuGet installe tout le
-framework et garde harnais/runner à la même version. Aucun EXE à copier,
-aucun dotnet-tools.json à maintenir.
+Pin the published version you chose. The NuGet restore installs the whole
+framework and keeps harness and runner at the same version. No EXE to copy, no
+dotnet-tools.json to maintain.
 
-Placer labtesting.json à la racine du dépôt (ou près du projet de tests) :
+Put labtesting.json at the repository root, or next to the test project:
 
 ```json
 {
   "server": ".server",
-  "plugins": ["src/MonPlugin/bin/Release/net48/MonPlugin.dll"],
+  "plugins": ["src/MyPlugin/bin/Release/net48/MyPlugin.dll"],
   "dependencies": [],
   "reports": "TestResults",
   "work": ".labtest-work",
@@ -28,30 +28,33 @@ Placer labtesting.json à la racine du dépôt (ou près du projet de tests) :
 }
 ```
 
-Le package fournit automatiquement le harnais, Harmony et l'assembly du projet
-de tests. Ne pas les redéclarer dans le JSON. Les plugins requis et leurs autres
-dépendances restent explicites. Les chemins JSON sont relatifs au fichier JSON.
+The package supplies the harness, Harmony and the test project's own assembly.
+Do not redeclare them in the JSON. Required plugins and their other dependencies
+stay explicit. JSON paths are relative to the JSON file.
 
 ```sh
-dotnet build tests/MonPlugin.Tests -c Release
-dotnet build tests/MonPlugin.Tests -c Release -t:LabTestingList
-dotnet build tests/MonPlugin.Tests -c Release -t:LabTesting
+dotnet build tests/MyPlugin.Tests -c Release
+dotnet build tests/MyPlugin.Tests -c Release -t:LabTestingList
+dotnet build tests/MyPlugin.Tests -c Release -t:LabTesting
 ```
 
-Le build normal restaure et compile ; les tests serveur ne se lancent que sur
-demande. Pour les lancer après chaque build, ajouter
-`<LabTestingRunOnBuild>true</LabTestingRunOnBuild>` au projet de tests.
+A plain build restores and compiles; the server tests only start on demand. To
+run them after every build, add
+`<LabTestingRunOnBuild>true</LabTestingRunOnBuild>` to the test project.
 
-Propriétés optionnelles : LabTestingConfig (relatif au projet), LabTestingServer,
+Optional properties: LabTestingConfig (relative to the project), LabTestingServer,
 LabTestingReports, LabTestingWork, LabTestingPort, LabTestingTimeout.
-LabTestingFailOnSkipped vaut true par défaut. Les paramètres de chemin CLI/MSBuild
-sont relatifs au projet de tests ; privilégier les chemins absolus en CI.
+LabTestingFailOnSkipped defaults to true. CLI and MSBuild path parameters are
+relative to the test project; prefer absolute paths in CI.
 
-Les assertions et attributs sont dans le namespace LabTesting. Les fixtures
-peuvent implémenter IAsyncLifetime pour restaurer leur état statique.
-Les rapports JSONL, JUnit, Markdown et les logs restent disponibles après un échec.
-Une suite vide ou un verdict incomplet fait échouer le build.
+Assertions and attributes live in the LabTesting namespace. Fixtures may
+implement IAsyncLifetime to restore their static state. The JSONL, JUnit and
+Markdown reports and the logs stay available after a failure. An empty suite or
+an incomplete verdict fails the build.
 
-Le package n'inclut aucune assembly du jeu, Unity ou LabAPI. Ajouter les références
-du plugin et du serveur correspondant aux types utilisés par les tests.
-PrivateAssets="all" évite de propager ce framework de tests dans vos packages.
+The package includes no game, Unity or LabAPI assembly. Add the plugin and server
+references matching the types your tests use. PrivateAssets="all" keeps this test
+framework from flowing into your own packages.
+
+`lib/net48` also carries `LabTesting.pdb` with SourceLink data, so a stack trace
+inside the harness resolves to file and line on GitHub.

@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
     <LangVersion>13</LangVersion>
-    <LabTestingPackageVersion Condition="'$(LabTestingPackageVersion)' == ''">0.1.0</LabTestingPackageVersion>
+    <LabTestingPackageVersion Condition="'$(LabTestingPackageVersion)' == ''">$(VersionPrefix)</LabTestingPackageVersion>
     <LabTestingConfig>$(MSBuildThisFileDirectory)labtesting.json</LabTestingConfig>
   </PropertyGroup>
   <ItemGroup>

@@ -319,7 +319,7 @@ public static class Assert
             return;
         }
 
-        TestContext.Fail("Assert.Throws", typeof(TEx).Name, "aucune exception", null);
+        TestContext.Fail("Assert.Throws", typeof(TEx).Name, "no exception", null);
     }
 
     internal static string Describe(object? value) => value?.ToString() ?? "null";

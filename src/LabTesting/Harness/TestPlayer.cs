@@ -38,7 +38,7 @@ public sealed class TestPlayer
     /// </summary>
     /// <exception cref="InvalidOperationException">The hub no longer has a wrapper.</exception>
     public Player Player => Player.Get(Hub)
-        ?? throw new InvalidOperationException("Le ReferenceHub n'a plus de wrapper LabAPI.");
+        ?? throw new InvalidOperationException("The ReferenceHub no longer has a LabAPI wrapper.");
 
     /// <summary>
     /// Gets a value indicating whether the player is dead.
@@ -66,7 +66,7 @@ public sealed class TestPlayer
         await Expect.Eventually(
             () => Hub != null && Hub.roleManager.CurrentRole != null && Hub.roleManager.CurrentRole.RoleTypeId == role,
             120.Ticks(),
-            "le rôle " + role + " doit être réellement assigné");
+            "role " + role + " must actually be assigned");
     }
 
     /// <summary>
@@ -116,7 +116,7 @@ public sealed class TestPlayer
     public async Task Kill(TestPlayer victim)
     {
         victim.Player.Damage(float.MaxValue, Player);
-        await Expect.Eventually(() => victim.IsDead, 60.Ticks(), victim.Player.Nickname + " doit mourir");
+        await Expect.Eventually(() => victim.IsDead, 60.Ticks(), victim.Player.Nickname + " must die");
     }
 }
 
@@ -223,7 +223,7 @@ internal sealed class DummyInput : IDummyInput
             });
 
             if (!satisfied)
-                TestContext.Fail("Input.Hold(" + action + ")", "condition atteinte sous " + max, "non atteinte", null);
+                TestContext.Fail("Input.Hold(" + action + ")", "condition met within " + max, "not met", null);
         }
         finally
         {
@@ -245,9 +245,9 @@ internal sealed class DummyInput : IDummyInput
 
         TestContext.Fail(
             "Input",
-            "action « " + name + " » exposée",
-            "actions disponibles : " + string.Join(", ", Names),
-            "une action n'apparaît qu'après avoir été sondée par le jeu (DummyKeyEmulator.cs:32-48)");
+            "action '" + name + "' exposed",
+            "available actions: " + string.Join(", ", Names),
+            "an action only shows up once the game has polled it (DummyKeyEmulator.cs:32-48)");
     }
 
     private bool TryInvoke(string name)

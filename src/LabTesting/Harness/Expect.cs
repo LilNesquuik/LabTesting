@@ -104,7 +104,7 @@ public static class Expect
         });
 
         if (happened)
-            TestContext.Fail("Never", "jamais " + Describe(predicate, because), "survenu", because);
+            TestContext.Fail("Never", "never " + Describe(predicate, because), "happened", because);
     }
 
     /// <summary>
@@ -135,7 +135,7 @@ public static class Expect
         }
 
         if (captured == null)
-            TestContext.Fail("Event<" + typeof(T).Name + ">", "levé sous " + within, "non levé", null);
+            TestContext.Fail("Event<" + typeof(T).Name + ">", "raised within " + within, "not raised", null);
 
         return captured!;
     }
@@ -205,7 +205,7 @@ public static class Expect
         because ?? predicate.Method.Name;
 
     private static string Observed(Exception? last) =>
-        last == null ? "false au dépassement" : "prédicat en erreur : " + last.GetType().Name;
+        last == null ? "false on timeout" : "predicate threw: " + last.GetType().Name;
 
     /// <summary>
     /// Rejects event assertions inside a performance test.
@@ -227,7 +227,7 @@ public static class Expect
         if (ctx == null || !ctx.Perf)
             return;
 
-        ctx.HarnessError = what + " est interdit dans un test [Perf] (D11).";
+        ctx.HarnessError = what + " is not allowed inside a [Perf] test (D11).";
         throw new AssertionAbort(ctx.HarnessError);
     }
 }
@@ -293,7 +293,7 @@ internal sealed class EventRecorder : IEventRecorder
                     "AssertOrdered",
                     string.Join(" → ", Names(_watched)),
                     string.Join(" → ", Names(_seen)),
-                    _watched[i].Name + " manquant ou hors séquence");
+                    _watched[i].Name + " missing or out of sequence");
                 return;
             }
 
@@ -418,7 +418,7 @@ public static class EventCatalog
     public static IDisposable Hook<T>(Action<T> callback) where T : EventArgs
     {
         if (!Table.TryGetValue(typeof(T), out EventInfo ev))
-            throw new InvalidOperationException("Aucun event LabAPI ne porte " + typeof(T).FullName + ".");
+            throw new InvalidOperationException("No LabAPI event is named " + typeof(T).FullName + ".");
 
         return new Subscription<T>(ev, callback);
     }
@@ -449,7 +449,7 @@ public static class EventCatalog
                 // This handler runs inside LabAPI's per-subscriber try/catch, so throwing here
                 // would only produce a lost log line. Record the failure instead.
                 TestContext.Current?.AddFailure(
-                    new Failure("EventCatalog.Hook", "handler sans erreur", e.GetType().Name, 0, e.Message));
+                    new Failure("EventCatalog.Hook", "handler without error", e.GetType().Name, 0, e.Message));
             }
         }
 

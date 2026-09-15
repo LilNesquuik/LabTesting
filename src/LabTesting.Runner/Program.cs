@@ -38,7 +38,7 @@ internal static class Program
         string id = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N");
         string reports = Path.Combine(c.Reports, id);
         Directory.CreateDirectory(reports);
-        Console.WriteLine("[labtest] rapports: " + reports);
+        Console.WriteLine("[labtest] reports: " + reports);
         string work = Path.Combine(c.Work ?? Path.GetTempPath(), "labtest-" + id);
         Directory.CreateDirectory(work);
         File.WriteAllText(Path.Combine(work, ".labtesting-owned"), id);
@@ -67,7 +67,7 @@ internal static class Program
                 try
                 {
                     if (File.ReadAllText(Path.Combine(work, ".labtesting-owned")) != id)
-                        throw new IOException("Marqueur de propriété modifié.");
+                        throw new IOException("Ownership marker was modified.");
                     for (int attempt = 0; ; attempt++)
                     {
                         try { Deployment.DeleteOwned(work); break; }
@@ -77,11 +77,11 @@ internal static class Program
                 }
                 catch (Exception e) { error += "\nNettoyage: " + e.Message; }
             }
-            else Console.WriteLine("[labtest] travail conservé: " + work);
+            else Console.WriteLine("[labtest] work kept: " + work);
         }
         var path = Path.Combine(reports, "labtesting-results.jsonl");
         var verdict = Verdict.Parse(File.Exists(path) ? File.ReadLines(path) : [], o.List);
-        if (exit != 0) verdict.Problems.Add("Sortie serveur: " + exit + " (crash, timeout ou annulation).");
+        if (exit != 0) verdict.Problems.Add("Server exit code: " + exit + " (crash, timeout or cancellation).");
         if (error != null) verdict.Problems.Add(error);
         verdict.WriteReports(reports);
         foreach (var line in verdict.Lines) Console.WriteLine(line);

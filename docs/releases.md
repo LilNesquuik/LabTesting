@@ -1,96 +1,96 @@
-# Distributions et compatibilité
+# Distributions and compatibility
 
-## Package NuGet
+## NuGet package
 
-C'est le mode d'installation recommandé : un seul `PackageReference` apporte le
-harnais net48, Harmony, le runner portable .NET 10 et les cibles MSBuild.
-
-```powershell
-pwsh -File scripts/pack-nuget.ps1 -Version 0.1.0 -Managed C:/scpsl/SCPSL_Data/Managed
-```
-
-Le script compile le harnais, publie le runner en framework-dependent, lance
-`--selftest`, écrit `manifest.json` puis appelle `dotnet pack`. Le contenu est une
-liste autorisée fichier par fichier : jamais un glob sur un dossier `bin`.
-`scripts/verify-nuget.ps1` contrôle ensuite le contenu de l'archive, et le
-`.nupkg.sha256` est écrit à côté du package. Il refuse d'écraser un package
-existant : choisir un nouveau `-Output`.
-
-`scripts/test-nuget-consumer.ps1` valide le package comme un vrai consommateur :
-cache NuGet vierge, restauration depuis un dossier local, compilation de
-`examples/NuGetPlugin.Tests`, `-t:LabTestingList` puis `-t:LabTesting` avec
-`-RunServer` sur un serveur réel. Aucun chemin vers les sources de LabTesting
-n'est utilisé.
-
-Le workflow `.github/workflows/nuget-release.yml` rejoue tout cela quand une
-release est publiée, préversion comprise : packaging sous Windows, validation sur
-`windows-latest` et `ubuntu-24.04` avec un serveur SteamCMD réel, puis publication
-sur NuGet.org et GitHub Packages et ajout du `.nupkg` et de son SHA-256 à la
-release. Un `workflow_dispatch` avec `publish: false` exécute la validation sans
-rien publier.
-
-La publication sur NuGet.org passe par le **trusted publishing** : le job demande
-un jeton OIDC à GitHub (`id-token: write`), `NuGet/login@v1` l'échange contre une
-clé à usage unique valable une heure, et le push l'utilise immédiatement. Aucune
-clé d'API longue durée n'est stockée. Le seul secret est **NUGET_USER**, le nom de
-profil nuget.org. La policy correspondante sur nuget.org vise le dépôt
-`LilNesquuik/LabTesting`, le fichier `nuget-release.yml`, sans environment, avec le
-scope Push et le motif `LabTesting`. Le push vers GitHub Packages continue
-d'utiliser le `GITHUB_TOKEN` du job.
-
-## Archives autonomes
+This is the recommended way to install: a single `PackageReference` brings the
+net48 harness, Harmony, the portable .NET 10 runner and the MSBuild targets.
 
 ```powershell
-pwsh -File scripts/package.ps1 -Version 0.1.0 -Managed C:/scpsl/SCPSL_Data/Managed
+pwsh -File scripts/pack-nuget.ps1 -Version 0.1.1 -Managed C:/scpsl/SCPSL_Data/Managed
 ```
 
-Sous Ubuntu, utiliser le chemin du dossier Managed installé par SteamCMD.
-Le script demande le réseau NuGet pour restaurer les runtimes .NET autonomes.
-Il refuse d'écraser un dossier de distribution existant ; choisir un nouveau
-`-Output` pour une nouvelle tentative.
+The script builds the harness, publishes the runner framework-dependent, runs
+`--selftest`, writes `manifest.json` and then calls `dotnet pack`. The contents
+are an allow-list, file by file: never a glob over a `bin` directory.
+`scripts/verify-nuget.ps1` then checks what the archive holds, and the
+`.nupkg.sha256` is written next to the package. The script refuses to overwrite an
+existing package: pick a fresh `-Output`.
 
-Résultats : `LabTesting-<version>-linux-x64.zip`,
-`LabTesting-<version>-win-x64.zip` et `SHA256SUMS`.
+`scripts/test-nuget-consumer.ps1` validates the package the way a real consumer
+would: clean NuGet cache, restore from a local directory, build
+`examples/NuGetPlugin.Tests`, then `-t:LabTestingList` and `-t:LabTesting` with
+`-RunServer` against a real server. No path to the LabTesting sources is used.
 
-Chaque archive contient :
+`lib/net48` also ships `LabTesting.pdb`. SourceLink data is embedded in it, so a
+stack trace inside the harness resolves to file and line against the GitHub
+sources of the matching commit.
 
-- `harness/LabTesting.dll` et `harness/0Harmony.dll`.
-- `runner/` : exécutable et runtime .NET autonome de la plateforme.
-- `tools/` : installation serveur, vérification et récupération du nettoyage.
-- `manifest.json` : version, cible, dépendances, SHA-256 de chaque fichier du payload.
-- Notices des composants tiers.
+The `.github/workflows/nuget-release.yml` workflow replays all of this whenever a
+release is published, prereleases included: packaging on Windows, validation on
+`windows-latest` and `ubuntu-24.04` against a real SteamCMD server, then
+publication to NuGet.org and GitHub Packages, and the `.nupkg` and its SHA-256
+attached to the release. A `workflow_dispatch` with `publish: false` runs the
+validation without publishing anything.
 
-Le manifeste exclut sa propre somme ; `SHA256SUMS` protège les archives complètes.
-`pwsh -File scripts/verify-release.ps1 -Directory .labtesting` vérifie les fichiers
-après extraction. Sous Linux, appliquer `chmod +x .labtesting/runner/labtest`
-après extraction du ZIP.
+Publishing to NuGet.org goes through **trusted publishing**: the job asks GitHub
+for an OIDC token (`id-token: write`), `NuGet/login@v1` exchanges it for a
+single-use key valid one hour, and the push uses it immediately. No long-lived API
+key is stored. The only secret is **NUGET_USER**, the nuget.org profile name. The
+matching policy on nuget.org targets the `LilNesquuik/LabTesting` repository, the
+`nuget-release.yml` file, no environment, the Push scope and the `LabTesting`
+pattern. The push to GitHub Packages keeps using the job's `GITHUB_TOKEN`.
 
-**Aucune assembly SCP:SL, LabAPI, Unity ou assembly publicisée du jeu n'est
-embarquée.** Le packaging utilise une liste autorisée pour le harnais, jamais
-un glob sur son dossier bin. Les références du jeu viennent du serveur installé.
+## Standalone archives
 
-Le workflow de release publie d'abord des artefacts puis crée un brouillon de
-release pour un tag `v<version>`. Lancer la validation serveur Windows/Ubuntu
-avant publication. Publier le brouillon déclenche ensuite `nuget-release.yml`.
-Les releases de cette session n'ont pas été envoyées à GitHub.
+```powershell
+pwsh -File scripts/package.ps1 -Version 0.1.1 -Managed C:/scpsl/SCPSL_Data/Managed
+```
 
-## Matrice de compatibilité
+The script needs NuGet network access to restore the self-contained .NET runtimes.
+It refuses to overwrite an existing distribution directory; pick a new `-Output`
+for another attempt.
 
-| Composant | Référence de cette version |
+Output: `LabTesting-<version>-linux-x64.zip`,
+`LabTesting-<version>-win-x64.zip` and `SHA256SUMS`.
+
+Each archive holds:
+
+- `harness/LabTesting.dll` and `harness/0Harmony.dll`.
+- `runner/`: the platform's executable and its self-contained .NET runtime.
+- `tools/`: server install, verification and cleanup recovery.
+- `manifest.json`: version, target, dependencies, SHA-256 of every payload file.
+- Third-party notices.
+
+The manifest excludes its own hash; `SHA256SUMS` covers the complete archives.
+`pwsh -File scripts/verify-release.ps1 -Directory .labtesting` checks the files
+after extraction. On Linux, run `chmod +x .labtesting/runner/labtest` once the ZIP
+is extracted.
+
+**No SCP:SL, LabAPI, Unity or publicized game assembly is embedded.** Packaging
+uses an allow-list for the harness, never a glob over its bin directory. Game
+references come from the installed server.
+
+The release workflow builds the net48 assemblies on `windows-latest` — see the
+known limits — uploads the artifacts, then creates a **draft** release for a
+`v<version>` tag. Publishing that draft triggers `nuget-release.yml`.
+
+## Compatibility matrix
+
+| Component | Reference for this version |
 |---|---|
 | Runner | .NET 10, Windows/Linux x64 |
-| Harnais et tests | net48, chargés par le Mono du serveur |
-| SCP:SL validé localement | 14.2.7 Windows et Ubuntu 24.04 / WSL2 |
-| LabAPI utilisé pour compiler et tester | 1.1.7 |
+| Harness and tests | net48, loaded by the server's Mono |
+| SCP:SL validated | 14.2.7 on Windows and Ubuntu 24.04 |
+| LabAPI used to build and test | 1.1.7 |
 | Harmony | 2.3.6 |
 
-La version minimale déclarée par le plugin est LabAPI 1.1.0, mais cela ne constitue
-pas une validation de toutes les versions 1.1.x. Le harnais utilise des détails
-internes du jeu via publicisation : recompiler et relancer la suite après chaque
-mise à jour SCP:SL/LabAPI. Un échec sur une version nouvelle ne doit pas être
-contourné en acceptant un verdict incomplet.
+The minimum version the plugin declares is LabAPI 1.1.0, which is not a validation
+of every 1.1.x release. The harness reaches into internal game details through
+publicizing: rebuild and rerun the suite after every SCP:SL or LabAPI update. A
+failure on a new version must not be worked around by accepting an incomplete
+verdict.
 
-.NET 10 est une version LTS, voir la
-[politique officielle .NET](https://dotnet.microsoft.com/en-us/platform/support/policy).
-Les chemins d'isolation reposent sur la politique gamedir de
-[PathManager LabAPI](https://github.com/northwood-studios/LabAPI/blob/master/LabApi/Loader/Features/Paths/PathManager.cs).
+.NET 10 is an LTS release, see the
+[official .NET policy](https://dotnet.microsoft.com/en-us/platform/support/policy).
+The isolation paths rely on the gamedir policy of
+[LabAPI's PathManager](https://github.com/northwood-studios/LabAPI/blob/master/LabApi/Loader/Features/Paths/PathManager.cs).

@@ -50,7 +50,7 @@ internal sealed record Options(SuiteConfig Suite, bool List)
             if (args[i] == "--config") config = Path.GetFullPath(args[++i]);
         var c = config == null ? new SuiteConfig() :
             JsonSerializer.Deserialize<SuiteConfig>(File.ReadAllText(config), Json)
-            ?? throw new ArgumentException("Configuration vide.");
+            ?? throw new ArgumentException("Empty configuration.");
         string root = config == null ? Environment.CurrentDirectory : Path.GetDirectoryName(config)!;
         string Resolve(string p) => Path.GetFullPath(p, root);
         c.Server = c.Server.Length == 0 ? "" : Resolve(c.Server);
@@ -63,7 +63,7 @@ internal sealed record Options(SuiteConfig Suite, bool List)
         if (c.Work != null) c.Work = Resolve(c.Work);
         for (int i = 1; i < args.Length; i++)
         {
-            string Value() => ++i < args.Length ? args[i] : throw new ArgumentException("Valeur manquante.");
+            string Value() => ++i < args.Length ? args[i] : throw new ArgumentException("Missing value.");
             switch (args[i])
             {
                 case "--config": Value(); break;
@@ -92,15 +92,15 @@ internal sealed record Options(SuiteConfig Suite, bool List)
                 case "--framework-tests": c.FrameworkTests = true; break;
                 case "--fail-on-skipped": c.FailOnSkipped = true; break;
                 case "--keep": c.Keep = true; break;
-                default: throw new ArgumentException("Argument inconnu: " + args[i]);
+                default: throw new ArgumentException("Unknown argument: " + args[i]);
             }
         }
         if (!Directory.Exists(c.Server) || !File.Exists(c.Harness))
-            throw new ArgumentException("server et harness doivent exister.");
+            throw new ArgumentException("server and harness must both exist.");
         if (c.Tests.Length == 0 && !c.FrameworkTests)
-            throw new ArgumentException("Déclarez tests ou activez explicitement frameworkTests.");
+            throw new ArgumentException("Declare tests or enable frameworkTests explicitly.");
         if (c.Port is < 1 or > 65535 || c.TimeoutSeconds is < 1 or > 86400 || c.Tickrate is < 1 or > 1000)
-            throw new ArgumentException("Port, timeout ou tickrate invalide.");
+            throw new ArgumentException("Invalid port, timeout or tickrate.");
         return new Options(c, args[0] == "list");
     }
 }

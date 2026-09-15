@@ -132,12 +132,12 @@ public static class Discovery
             }
             catch (ReflectionTypeLoadException e)
             {
-                throw new InvalidOperationException("Découverte impossible dans " + assembly.FullName +
+                throw new InvalidOperationException("Discovery failed in " + assembly.FullName +
                     ": " + string.Join("\n", Array.ConvertAll(e.LoaderExceptions, x => x?.ToString())), e);
             }
             catch (Exception e)
             {
-                throw new InvalidOperationException("Découverte impossible dans " + assembly.FullName, e);
+                throw new InvalidOperationException("Discovery failed in " + assembly.FullName, e);
             }
 
             foreach (Type type in types)
@@ -195,7 +195,7 @@ public static class Discovery
             var rows = (InlineDataAttribute[])method.GetCustomAttributes(typeof(InlineDataAttribute), false);
             if (rows.Length == 0)
             {
-                cases.Add(Invalid(type, method, baseId, "[Theory] sans [InlineData]."));
+                cases.Add(Invalid(type, method, baseId, "[Theory] without [InlineData]."));
                 return;
             }
 
@@ -207,7 +207,7 @@ public static class Discovery
 
         if (method.GetParameters().Length != 0)
         {
-            cases.Add(Invalid(type, method, baseId, "[Fact] ne prend pas de paramètre."));
+            cases.Add(Invalid(type, method, baseId, "[Fact] takes no parameter."));
             return;
         }
 
@@ -224,11 +224,11 @@ public static class Discovery
     private static TestCase Validate(TestCase test)
     {
         if (test.Method.ReturnType != typeof(Task) && test.Method.ReturnType != typeof(void))
-            test.Skip = "la méthode doit retourner Task ou void, pas " + test.Method.ReturnType.Name + ".";
+            test.Skip = "the method must return Task or void, not " + test.Method.ReturnType.Name + ".";
         else if (test.Method.GetParameters().Length != test.Arguments.Length)
-            test.Skip = "nombre d'arguments [InlineData] incompatible avec la signature.";
+            test.Skip = "[InlineData] argument count does not match the signature.";
         else if (test.Fixture.GetConstructor(Type.EmptyTypes) == null)
-            test.Skip = test.Fixture.Name + " n'a pas de constructeur sans paramètre.";
+            test.Skip = test.Fixture.Name + " has no parameterless constructor.";
 
         return test;
     }

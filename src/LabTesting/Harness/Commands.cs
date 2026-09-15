@@ -32,7 +32,7 @@ public readonly struct CommandResult
     public string Response { get; }
 
     /// <inheritdoc/>
-    public override string ToString() => (Success ? "OK" : "KO") + " : " + Response;
+    public override string ToString() => (Success ? "OK" : "KO") + ": " + Response;
 }
 
 /// <summary>
@@ -117,7 +117,7 @@ public static class Commands
     public static CommandResult Run(string name, Where where, ICommandSender sender, params string[] args)
     {
         if (!TryResolve(name, where, out ICommand command))
-            return new CommandResult(false, "commande « " + name + " » introuvable dans " + where + ".");
+            return new CommandResult(false, "command '" + name + "' not found in " + where + ".");
 
         return Run(command, sender, args);
     }
@@ -140,7 +140,7 @@ public static class Commands
         }
         catch (Exception e)
         {
-            return new CommandResult(false, e.GetType().Name + " : " + e.Message);
+            return new CommandResult(false, e.GetType().Name + ": " + e.Message);
         }
     }
 

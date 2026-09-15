@@ -1,53 +1,59 @@
 # LabTesting
 
-Tests de plugins LabAPI dans un vrai serveur SCP:SL, pilotés par un runner autonome.
-Le harnais tourne dans le jeu en **net48** ; `labtest` tourne en **.NET 10** sur
-Windows et Linux x64.
+Test LabAPI plugins inside a real SCP:SL server, driven by a standalone runner.
+The harness runs inside the game on **net48**; `labtest` runs on **.NET 10** on
+Windows and Linux x64.
 
-Un seul `PackageReference` dans le projet de tests net48 :
+A single `PackageReference` in the net48 test project:
 
 ```xml
-<PackageReference Include="LabTesting" Version="0.1.0" PrivateAssets="all" />
+<PackageReference Include="LabTesting" Version="0.1.1" PrivateAssets="all" />
 ```
 
 ```sh
-dotnet build tests/MonPlugin.Tests -c Release -t:LabTesting
+dotnet build tests/MyPlugin.Tests -c Release -t:LabTesting
 ```
 
-La restauration NuGet installe le harnais, Harmony, le runner et les cibles
-MSBuild à la même version. Les archives autonomes restent disponibles pour une
-installation sans NuGet : `.labtesting/runner/labtest run --config examples/labtesting.json`.
+The NuGet restore installs the harness, Harmony, the runner and the MSBuild
+targets at the same version. Standalone archives remain available for an
+installation without NuGet: `.labtesting/runner/labtest run --config examples/labtesting.json`.
 
-- [Intégration depuis un dépôt vierge](docs/integration.md)
-- [Configuration, isolation et protocole](docs/runner.md)
-- [GitHub Actions et dépendances privées](docs/github-actions.md)
-- [Distributions et compatibilité](docs/releases.md)
-- [État des validations et limites](docs/validation.md)
-- [Plugin minimal](examples/SamplePlugin/Plugin.cs) et [tests](examples/SamplePlugin.Tests/CounterTests.cs)
+- [Integrating from an empty repository](docs/integration.md)
+- [Configuration, isolation and protocol](docs/runner.md)
+- [GitHub Actions and private dependencies](docs/github-actions.md)
+- [Distributions and compatibility](docs/releases.md)
+- [Validation record and known limits](docs/validation.md)
+- [Minimal plugin](examples/SamplePlugin/Plugin.cs) and [its tests](examples/SamplePlugin.Tests/CounterTests.cs)
 
-## Depuis les sources
+## From source
 
-Installer le SDK .NET 10 et le serveur dédié Steam 996560, puis :
+Install the .NET 10 SDK and the Steam dedicated server 996560, then:
 
 ```powershell
-$env:SL_REFERENCES = 'C:/chemin/serveur/SCPSL_Data/Managed'
+$env:SL_REFERENCES = 'C:/path/to/server/SCPSL_Data/Managed'
 $env:EXILED_REFERENCES = $env:SL_REFERENCES
 dotnet build src/LabTesting -c Release
 dotnet run --project src/LabTesting.Runner -c Release -- --selftest
-dotnet run --project src/LabTesting.Runner -c Release -- run --config examples/framework.json --server C:/chemin/serveur
+dotnet run --project src/LabTesting.Runner -c Release -- run --config examples/framework.json --server C:/path/to/server
 ```
 
-Les tests internes nécessitent `frameworkTests: true`. Une suite externe vide
-échoue même si les tests internes sont activés. Les rapports restent dans
-`TestResults/<identifiant-unique>/`, y compris après une erreur.
+The framework's own tests require `frameworkTests: true`. An empty external suite
+fails even when the framework tests are enabled. Reports stay in
+`TestResults/<unique-id>/`, including after an error.
 
-**État** : compilation, archives autonomes et exécutions réelles Windows et Ubuntu
-24.04 (WSL2) validées : 4 tests du plugin d'exemple et 12 tests internes sur chaque
-système. Le package NuGet est validé sous Windows depuis un cache vierge
-(restauration, compilation, découverte et 4/4 tests réels). L'exécution GitHub
-Actions reste à confirmer ; voir le relevé détaillé.
+The net48 assemblies only build on Windows: the game's `Managed` directory ships
+none of the .NET Framework facades, and a Linux machine has no targeting pack to
+fall back on. Those Windows-built DLLs are the ones executed on Linux, which is
+where every production SCP:SL server runs. The constraint is specific to this
+harness — an ordinary net48 plugin test project builds fine on Linux.
 
-## Licence
+**Status**: builds, standalone archives and real runs on Windows and Ubuntu 24.04
+are validated — 4 sample plugin tests and 12 framework tests on each system. The
+NuGet package is validated on both systems from a clean cache (restore, build,
+discovery and 4/4 real tests), locally and on GitHub runners. See the detailed
+record.
 
-[MIT](LICENSE). Les composants tiers redistribués sont listés dans
+## License
+
+[MIT](LICENSE). Redistributed third-party components are listed in
 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

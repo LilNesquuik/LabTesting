@@ -30,22 +30,22 @@ internal sealed class Verdict
             {
                 using var doc = JsonDocument.Parse(raw);
                 var root = doc.RootElement;
-                if (root.ValueKind != JsonValueKind.Object) throw new FormatException("Objet JSON attendu.");
+                if (root.ValueKind != JsonValueKind.Object) throw new FormatException("Expected a JSON object.");
                 if (root.EnumerateObject().GroupBy(p => p.Name).Any(g => g.Count() > 1))
-                    throw new FormatException("Clé JSON dupliquée.");
-                if (v.HasSummary) throw new FormatException("Données après le résumé.");
+                    throw new FormatException("Duplicate JSON key.");
+                if (v.HasSummary) throw new FormatException("Data after the summary.");
                 switch (Field(raw, "kind"))
                 {
                     case "plan":
-                        if (planSeen || v.Results.Count > 0) throw new FormatException("Plan dupliqué ou tardif.");
+                        if (planSeen || v.Results.Count > 0) throw new FormatException("Duplicate or late plan.");
                         planSeen = true;
                         v.metadata = raw;
-                        if (root.GetProperty("list").GetBoolean() != listOnly) throw new FormatException("Mode de plan incorrect.");
+                        if (root.GetProperty("list").GetBoolean() != listOnly) throw new FormatException("Wrong plan mode.");
                         foreach (var test in root.GetProperty("tests").EnumerateArray())
                         {
                             var id = test.GetProperty("id").GetString()!;
                             if (string.IsNullOrWhiteSpace(id) || !v.Plan.TryAdd(id, test.GetRawText()))
-                                throw new FormatException("Identifiant dupliqué ou vide dans le plan.");
+                                throw new FormatException("Duplicate or empty identifier in the plan.");
                         }
                         break;
                     case "summary":
@@ -53,37 +53,37 @@ internal sealed class Verdict
                         summary = raw;
                         break;
                     case null:
-                        if (!planSeen || listOnly) throw new FormatException("Résultat sans plan exécutable.");
+                        if (!planSeen || listOnly) throw new FormatException("Result without an executable plan.");
                         string testId = root.GetProperty("id").GetString()!;
                         if (!v.Plan.ContainsKey(testId) || !v.Results.TryAdd(testId, raw))
-                            throw new FormatException("Résultat inattendu ou dupliqué: " + testId);
+                            throw new FormatException("Unexpected or duplicate result: " + testId);
                         string? outcome = Field(raw, "outcome");
                         if (outcome is not ("passed" or "failed" or "skipped" or "error"))
-                            throw new FormatException("Outcome invalide.");
+                            throw new FormatException("Invalid outcome.");
                         if (Field(raw, "collection") != Field(v.Plan[testId], "collection"))
-                            throw new FormatException("Collection incohérente.");
+                            throw new FormatException("Inconsistent collection.");
                         if (outcome == "passed" && (Objects(raw, "failures").Count > 0 ||
                             Objects(raw, "swallowed").Count > 0 || Field(raw, "harnessError") != null))
-                            throw new FormatException("Test réussi avec des erreurs.");
+                            throw new FormatException("Passing test reported errors.");
                         v.Lines.Add(outcome + " " + testId);
                         break;
-                    default: throw new FormatException("Type de ligne inconnu.");
+                    default: throw new FormatException("Unknown line type.");
                 }
             }
             catch (Exception e) when (e is JsonException or InvalidOperationException or KeyNotFoundException or FormatException or ArgumentException)
-            { v.Problems.Add("JSONL invalide: " + e.Message); }
+            { v.Problems.Add("Invalid JSONL: " + e.Message); }
         }
-        if (!planSeen || v.Plan.Count == 0) v.Problems.Add("Plan absent ou vide.");
-        if (!v.HasSummary) v.Problems.Add("Résumé absent.");
+        if (!planSeen || v.Plan.Count == 0) v.Problems.Add("Missing or empty plan.");
+        if (!v.HasSummary) v.Problems.Add("Missing summary.");
         if (!listOnly)
-            foreach (var id in v.Plan.Keys.Except(v.Results.Keys)) v.Problems.Add("Résultat absent: " + id);
+            foreach (var id in v.Plan.Keys.Except(v.Results.Keys)) v.Problems.Add("Missing result: " + id);
         else
             foreach (var id in v.Plan.Keys) v.Lines.Add(id);
         if (summary != null)
         {
             foreach (var pair in new[] { ("passed", v.Passed), ("failed", v.Failed), ("skipped", v.Skipped), ("errors", v.Errors) })
                 if (!TryNumber(summary, pair.Item1, out var n) || n != pair.Item2)
-                    v.Problems.Add("Compteur de résumé incohérent: " + pair.Item1);
+                    v.Problems.Add("Inconsistent summary counter: " + pair.Item1);
             if (Field(summary, "harnessError") is string error) v.Problems.Add(error);
         }
         return v;
@@ -110,17 +110,17 @@ internal sealed class Verdict
                 var test = new XElement("testcase", new XAttribute("name", entry.Key),
                     new XAttribute("classname", Field(entry.Value, "collection") ?? ""),
                     new XAttribute("time", ((result == null ? 0 : Number(result, "durationMilliseconds")) / 1000.0).ToString(CultureInfo.InvariantCulture)));
-                if (outcome == null) test.Add(new XElement("error", new XAttribute("message", "Résultat absent")));
+                if (outcome == null) test.Add(new XElement("error", new XAttribute("message", "Missing result")));
                 else if (outcome == "skipped") test.Add(new XElement("skipped", Field(result!, "skip") ?? ""));
                 else if (outcome != "passed") test.Add(new XElement(outcome == "failed" ? "failure" : "error",
-                    new XAttribute("message", Field(result!, "harnessError") ?? "Assertions ou exceptions"), result));
+                    new XAttribute("message", Field(result!, "harnessError") ?? "Assertions or exceptions"), result));
                 if (result != null) test.Add(new XElement("system-out", result));
                 suite.Add(test);
             }
         }
         foreach (var problem in Problems)
             suite.Add(new XElement("testcase", new XAttribute("name", "Infrastructure"),
-                new XElement("error", new XAttribute("message", "Exécution incomplète ou invalide"), problem)));
+                new XElement("error", new XAttribute("message", "Incomplete or invalid run"), problem)));
         var cases = suite.Elements("testcase").ToArray();
         suite.SetAttributeValue("tests", cases.Length);
         suite.SetAttributeValue("failures", cases.Count(x => x.Element("failure") != null));
@@ -132,21 +132,21 @@ internal sealed class Verdict
         foreach (var attribute in suite.DescendantsAndSelf().Attributes()) attribute.Value = XmlSafe(attribute.Value);
         new XDocument(new XElement("testsuites", suite)).Save(Path.Combine(directory, "junit.xml"));
         static string Safe(string text) => System.Net.WebUtility.HtmlEncode(text).Replace("|", "&#124;").Replace("\r", "").Replace("\n", "<br>");
-        var lines = new List<string> { "# LabTesting", "", $"{Passed} réussis · {Failed} échecs · {Skipped} ignorés · {Errors} erreurs", "",
-            "| Test | Collection | Résultat | Durée (ms) |", "|---|---|---|---|" };
+        var lines = new List<string> { "# LabTesting", "", $"{Passed} passed \u00b7 {Failed} failed \u00b7 {Skipped} skipped \u00b7 {Errors} errors", "",
+            "| Test | Collection | Outcome | Duration (ms) |", "|---|---|---|---|" };
         var details = new List<string>();
         foreach (var entry in Plan)
         {
             Results.TryGetValue(entry.Key, out var result);
             lines.Add("| " + Safe(entry.Key) + " | " + Safe(Field(entry.Value, "collection") ?? "") + " | " +
-                (result == null ? list ? "découvert" : "absent" : Field(result, "outcome")) + " | " +
+                (result == null ? list ? "discovered" : "missing" : Field(result, "outcome")) + " | " +
                 (result == null ? "—" : Number(result, "durationMilliseconds")) + " |");
             if (result != null && Field(result, "outcome") != "passed")
                 details.Add("\n<details><summary>" + Safe(entry.Key) + "</summary><pre>" + Safe(result) + "</pre></details>\n");
         }
         lines.AddRange(details);
         foreach (var problem in Problems) lines.Add("\n- " + Safe(problem));
-        if (metadata != null) lines.Add("\n<details><summary>Versions et plan</summary><pre>" + Safe(metadata) + "</pre></details>");
+        if (metadata != null) lines.Add("\n<details><summary>Versions and plan</summary><pre>" + Safe(metadata) + "</pre></details>");
         File.WriteAllLines(Path.Combine(directory, "summary.md"), lines);
     }
 

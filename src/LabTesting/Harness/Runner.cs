@@ -42,8 +42,8 @@ public static class Runner
                 request.CheckPlugins();
                 List<TestCase> plan = request.Plan();
                 verdict.WritePlan(plan, request.List);
-                Logger.Info("[LabTesting] " + plan.Count + " test(s) au plan, "
-                            + EventCatalog.Count + " events LabAPI catalogués.");
+                Logger.Info("[LabTesting] " + plan.Count + " test(s) planned, "
+                            + EventCatalog.Count + " LabAPI events catalogued.");
 
                 if (!request.List) await WaitForPlayableRound();
                 else
@@ -51,7 +51,7 @@ public static class Runner
                     // Quitting while FastMenu is still starting can leave native network
                     // threads alive. Wait for the lobby without invoking test fixtures.
                     await Expect.Eventually(() => Mirror.NetworkServer.active && GameCore.RoundStart.singleton != null,
-                        3600.Ticks(), "le lobby doit être chargé avant de quitter la découverte");
+                        3600.Ticks(), "the lobby must be loaded before discovery exits");
                 }
 
                 Dirty escalation = Dirty.Dummies;
@@ -63,12 +63,12 @@ public static class Runner
             catch (Exception e)
             {
                 harnessError = e.ToString();
-                Logger.Error("[LabTesting] erreur de harnais : " + e);
+                Logger.Error("[LabTesting] harness error: " + e);
             }
 
             verdict.WriteSummary(harnessError);
-            Logger.Info("[LabTesting] terminé : " + verdict.Passed + " ok, " + verdict.Failed
-                        + " échecs, " + verdict.Skipped + " ignorés, " + verdict.Errors + " erreurs.");
+            Logger.Info("[LabTesting] finished: " + verdict.Passed + " ok, " + verdict.Failed
+                        + " failed, " + verdict.Skipped + " skipped, " + verdict.Errors + " errors.");
         }
 
         Running = false;
@@ -81,7 +81,7 @@ public static class Runner
     private static async Task WaitForPlayableRound()
     {
         await Expect.Eventually(() => Mirror.NetworkServer.active, 3600.Ticks(),
-            "le serveur doit être actif");
+            "the server must be running");
         await World.ForceRoundStart();
     }
 
@@ -140,7 +140,7 @@ public static class Runner
         catch (Exception e)
         {
             context.HarnessError = e.ToString();
-            Logger.Error("[LabTesting] teardown de " + test.Id + " : " + e);
+            Logger.Error("[LabTesting] teardown of " + test.Id + ": " + e);
         }
 
         if (context.HarnessError != null) outcome = Outcome.Error;
@@ -155,8 +155,8 @@ public static class Runner
 
         // The test left more behind than it declared. Escalate for the next one and say so: a
         // test cannot quietly under-declare what it dirties.
-        Logger.Warn("[LabTesting] " + test.Id + " DIRTY : " + before + " → " + after
-                    + ", escalade au cran " + Isolation.Escalate(isolation) + ".");
+        Logger.Warn("[LabTesting] " + test.Id + " DIRTY: " + before + " → " + after
+                    + ", escalated to level " + Isolation.Escalate(isolation) + ".");
         return Isolation.Escalate(isolation);
     }
 
@@ -182,7 +182,7 @@ public static class Runner
             if (finished != body)
             {
                 context.AddFailure(new Failure(
-                    "Timeout", "terminé sous " + test.TimeoutTicks + " ticks", "toujours en cours",
+                    "Timeout", "completed within " + test.TimeoutTicks + " ticks", "still running",
                     test.TimeoutTicks, null));
                 return Outcome.Failed;
             }
@@ -202,7 +202,7 @@ public static class Runner
                 ? tie.InnerException
                 : e;
             context.AddFailure(new Failure(
-                "Exception", "aucune exception", real.GetType().Name, (int)(Pump.Tick - context.StartTick),
+                "Exception", "no exception", real.GetType().Name, (int)(Pump.Tick - context.StartTick),
                 real.ToString()));
             return Outcome.Failed;
         }
@@ -216,7 +216,7 @@ public static class Runner
             catch (Exception e)
             {
                 context.HarnessError = e.ToString();
-                Logger.Error("[LabTesting] DisposeAsync de " + test.Id + " : " + e);
+                Logger.Error("[LabTesting] DisposeAsync of " + test.Id + ": " + e);
             }
 
             unsubscribe?.Dispose();

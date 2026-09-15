@@ -48,7 +48,7 @@ public sealed class Pump : MonoBehaviour
     /// </summary>
     /// <exception cref="InvalidOperationException">The pump has not been installed.</exception>
     public static Pump Instance =>
-        _instance ?? throw new InvalidOperationException("La pompe n'est pas installée.");
+        _instance ?? throw new InvalidOperationException("The pump is not installed.");
 
     /// <summary>
     /// Gets a value indicating whether the pump is installed and ticking.
@@ -281,7 +281,7 @@ public sealed class Pump : MonoBehaviour
                 }
                 catch (Exception e)
                 {
-                    LabApi.Features.Console.Logger.Error("[LabTesting] continuation : " + e);
+                    LabApi.Features.Console.Logger.Error("[LabTesting] continuation: " + e);
                 }
             }
         }

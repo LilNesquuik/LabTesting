@@ -1,24 +1,23 @@
-# Intégrer un plugin
+# Integrating a plugin
 
-## 1. Prérequis et installation locale
+## 1. Prerequisites and local install
 
-Installer le SDK .NET 10 pour compiler et exécuter le runner. Le serveur utilise
-son propre Mono pour le harnais net48. Le package NuGet livre un runner portable
-qui s'appuie sur ce SDK ; les archives autonomes embarquent leur propre runtime.
+Install the .NET 10 SDK to build and to run the runner. The server uses its own
+Mono for the net48 harness. The NuGet package ships a portable runner that relies
+on that SDK; the standalone archives carry their own runtime.
 
-**Windows** : installer le serveur « SCP Secret Laboratory Dedicated Server » dans
-Steam, ou extraire SteamCMD puis exécuter :
+**Windows**: install "SCP Secret Laboratory Dedicated Server" through Steam, or
+extract SteamCMD and run:
 
 ```powershell
-./steamcmd.exe +force_install_dir C:/scpsl +login anonymous +app_update 996560 validate +quit
+./steamcmd.exe +login anonymous +force_install_dir C:/scpsl +app_update 996560 validate +quit
 ```
 
-Installer les prérequis natifs du serveur (notamment Visual C++ Redistributable).
-Les chemins avec espaces sont acceptés.
+Install the server's native prerequisites, notably the Visual C++ Redistributable.
+Paths with spaces are fine.
 
-**Ubuntu x64** : le template utilise Ubuntu 24.04, validé localement via WSL2 avec
-SCP:SL 14.2.7. Installer les dépendances puis
-utiliser le script livré :
+**Ubuntu x64**: the template uses Ubuntu 24.04. Install the dependencies then use
+the shipped script:
 
 ```bash
 sudo apt-get update
@@ -26,50 +25,52 @@ sudo apt-get install -y lib32gcc-s1 lib32stdc++6 libatomic1 libgomp1 libglu1-mes
 bash scripts/install-server.sh "$PWD/.server" "$HOME/steamcmd-labtesting"
 ```
 
-`install-server.sh` est livré dans le dépôt et dans les archives autonomes
-(`.labtesting/tools/`). Après extraction d'une archive, appliquer aussi
-`chmod +x .labtesting/runner/labtest` ; le runner du package NuGet n'en a pas besoin.
+`install-server.sh` lives in the repository and in the standalone archives
+(`.labtesting/tools/`). After extracting an archive, also run
+`chmod +x .labtesting/runner/labtest`; the NuGet package's runner does not need it.
+A freshly downloaded SteamCMD updates itself on its first run and can fail
+`app_update` with "Missing configuration"; the script warms it up and retries.
 
-Le téléchargement anonyme SteamCMD utilise l'application **996560**.
-Le serveur et sa copie isolée occupent chacun plusieurs Go : prévoir de la place
-pour chaque worker parallèle. Consulter les prérequis actualisés du
-[serveur dédié](https://techwiki.scpslgame.com/books/server-guides/page/1-how-to-create-a-dedicated-server).
+Anonymous SteamCMD downloads use application **996560**. The server and its
+isolated copy take several GB each: plan the space for every parallel worker. See
+the current prerequisites for the
+[dedicated server](https://techwiki.scpslgame.com/books/server-guides/page/1-how-to-create-a-dedicated-server).
 
-## 2. Démarrer depuis un dépôt vierge
+## 2. Starting from an empty repository
 
-1. Créer le dépôt de plugin.
-2. Copier les dossiers `examples/SamplePlugin` et `examples/SamplePlugin.Tests`,
-   ainsi que `examples/labtesting.json` et `global.json`.
-3. Ajouter le package au projet de tests net48, avec une **version publiée fixée** :
+1. Create the plugin repository.
+2. Copy the `examples/SamplePlugin` and `examples/SamplePlugin.Tests` directories,
+   plus `examples/labtesting.json` and `global.json`.
+3. Add the package to the net48 test project, with a **pinned published version**:
 
    ```xml
-   <PackageReference Include="LabTesting" Version="0.1.0" PrivateAssets="all" />
+   <PackageReference Include="LabTesting" Version="0.1.1" PrivateAssets="all" />
    ```
 
-4. Installer le serveur dans `.server/`, ou passer son chemin via
+4. Install the server into `.server/`, or pass its path through
    `-p:LabTestingServer=`.
-5. Compiler et exécuter :
+5. Build and run:
 
    ```bash
    export SL_REFERENCES="$PWD/.server/SCPSL_Data/Managed"
    export EXILED_REFERENCES="$SL_REFERENCES"
-   dotnet build tests/MonPlugin.Tests -c Release -t:LabTestingList
-   dotnet build tests/MonPlugin.Tests -c Release -t:LabTesting
+   dotnet build tests/MyPlugin.Tests -c Release -t:LabTestingList
+   dotnet build tests/MyPlugin.Tests -c Release -t:LabTesting
    ```
 
-Sous PowerShell, les mêmes commandes avec `$env:SL_REFERENCES`. Le build normal
-restaure et compile sans lancer le serveur ; seules les cibles `LabTesting` et
-`LabTestingList` le démarrent. [examples/NuGetPlugin.Tests](../examples/NuGetPlugin.Tests)
-est un consommateur complet du package : csproj, `labtesting.json` et tests partagés
-avec `SamplePlugin.Tests`. Les propriétés disponibles sont listées dans
+Under PowerShell, the same commands with `$env:SL_REFERENCES`. A plain build
+restores and compiles without starting the server; only the `LabTesting` and
+`LabTestingList` targets start it.
+[examples/NuGetPlugin.Tests](../examples/NuGetPlugin.Tests) is a complete consumer
+of the package: csproj, `labtesting.json` and tests shared with
+`SamplePlugin.Tests`. The available properties are listed in
 [packaging/README.md](../packaging/README.md).
 
-### Sans NuGet : archive autonome
+### Without NuGet: the standalone archive
 
-Télécharger une **release publiée et fixée**, vérifier son archive avec
-`SHA256SUMS`, puis l'extraire dans `.labtesting/` à la racine. Ne pas utiliser un
-lien `latest`. Le harnais est alors passé au build à la main et le runner est
-invoqué directement :
+Download a **published, pinned release**, check its archive against `SHA256SUMS`,
+then extract it into `.labtesting/` at the root. Do not use a `latest` link. The
+harness is then handed to the build by hand and the runner is invoked directly:
 
 ```bash
 dotnet build examples/SamplePlugin.Tests -c Release -p:LabTestingPath="$PWD/.labtesting/harness/LabTesting.dll"
@@ -77,29 +78,30 @@ dotnet build examples/SamplePlugin.Tests -c Release -p:LabTestingPath="$PWD/.lab
 .labtesting/runner/labtest run --config examples/labtesting.json --fail-on-skipped
 ```
 
-`SamplePlugin.Tests` est une bibliothèque net48, pas un projet `dotnet test`.
-Elle référence LabTesting et le plugin. Les attributs sont dans `LabTesting`,
-pas dans xUnit. Adapter noms, chemins et assertions à votre plugin.
+`SamplePlugin.Tests` is a net48 library, not a `dotnet test` project. It
+references LabTesting and the plugin. The attributes come from `LabTesting`, not
+from xUnit. Adapt names, paths and assertions to your plugin.
 
-Pour utiliser les sources sans release : compiler `src/LabTesting`, puis pointer
-`harness` et la dépendance Harmony vers `src/LabTesting/bin/Release/net48`.
-Le projet de tests utilise ce chemin par défaut quand `LabTestingPath` est absent.
+To work from source without a release: build `src/LabTesting`, then point
+`harness` and the Harmony dependency at `src/LabTesting/bin/Release/net48`. The
+test project uses that path by default when `LabTestingPath` is absent.
 
-## 3. Écrire les tests
+## 3. Writing tests
 
-Le [projet complet](../examples/SamplePlugin.Tests/CounterTests.cs) contient quatre
-tests exécutables : synchrone, invariant asynchrone, joueur factice et événement.
+The [full project](../examples/SamplePlugin.Tests/CounterTests.cs) holds four
+runnable tests: a synchronous one, an asynchronous invariant, a dummy player and
+an event.
 
 ```csharp
 [Fact]
-public void Ajouter_un_point()
+public void Increment_is_visible()
 {
     CounterPlugin.Increment();
     Assert.Equal(1, CounterPlugin.Count);
 }
 
 [Fact]
-public async Task Un_joueur_est_pret()
+public async Task Dummy_is_ready()
 {
     var player = await World.Spawn(RoleTypeId.ClassD, "Test");
     Assert.True(player.Hub.IsDummy);
@@ -108,13 +110,12 @@ public async Task Un_joueur_est_pret()
 }
 ```
 
-Les attentes utilisent les ticks du jeu. Éviter `Thread.Sleep` et les boucles qui
-bloquent le thread Unity. `Expect.Tick`, `Frame`, `Eventually`, `Always` et
-`Never` permettent de laisser avancer le jeu. `[Timeout(600)]` borne le corps
-du test en ticks ; le timeout du runner borne toute l'exécution, y compris
-démarrage et fixtures bloquées.
+Waits are expressed in game ticks. Avoid `Thread.Sleep` and loops that block the
+Unity thread. `Expect.Tick`, `Frame`, `Eventually`, `Always` and `Never` let the
+game move forward. `[Timeout(600)]` bounds the test body in ticks; the runner's
+timeout bounds the whole run, including startup and stuck fixtures.
 
-Souscrire **avant** l'action qui produit l'événement :
+Subscribe **before** the action that raises the event:
 
 ```csharp
 var changed = Expect.Event<PlayerChangedRoleEventArgs>(120.Ticks());
@@ -122,20 +123,19 @@ await World.Spawn(RoleTypeId.ClassD, "Event");
 Assert.NotNull(await changed);
 ```
 
-Importer `LabApi.Events.Arguments.PlayerEvents`. Utiliser
-`Expect.Events<T1,T2>()` dans un `using` pour observer une séquence.
-Certains événements du catalogue ne sont pas produits naturellement par le jeu :
-voir `EventCatalog.NeverRaisedByGame`.
+Import `LabApi.Events.Arguments.PlayerEvents`. Use `Expect.Events<T1,T2>()` inside
+a `using` to observe a sequence. Some catalogued events are never raised
+naturally by the game: see `EventCatalog.NeverRaisedByGame`.
 
-Les assertions, exceptions normales, exceptions avalées par LabAPI et erreurs
-de teardown influencent toutes le résultat. Les détails et piles d'appel
-sont conservés dans le JSONL et dans le JUnit.
+Assertions, ordinary exceptions, exceptions swallowed by LabAPI and teardown
+errors all shape the result. Details and stack traces are kept in the JSONL and in
+the JUnit report.
 
-## 4. Nettoyer les registres statiques
+## 4. Cleaning static registries
 
-Le nettoyage du monde ne connaît pas les dictionnaires de votre plugin.
-Implémenter `IAsyncLifetime`, sauvegarder l'état avant le test, restaurer après,
-désabonner les événements et annuler les tâches démarrées :
+The world cleanup knows nothing about your plugin's dictionaries. Implement
+`IAsyncLifetime`, save the state before the test, restore it afterwards,
+unsubscribe from events and cancel the tasks you started:
 
 ```csharp
 public Task InitializeAsync()
@@ -151,52 +151,51 @@ public Task DisposeAsync()
 }
 ```
 
-Les fixtures sont recréées pour chaque cas. `DisposeAsync` est tenté même après
-un échec de setup. Ses erreurs font échouer le test.
-Les tests d'une suite s'exécutent séquentiellement ; une collection est un groupe
-de sélection, pas une fixture partagée.
+Fixtures are recreated for every case. `DisposeAsync` is attempted even after a
+setup failure. Its errors fail the test. Tests within a suite run sequentially; a
+collection is a selection group, not a shared fixture.
 
-`Dirty.Dummies` nettoie les joueurs factices ; `Dirty.Round` redémarre la partie.
-**`Dirty.Process` reste actuellement une dégradation vers Round**, pas un nouveau
-processus pour chaque test. Pour isoler un registre impossible à restaurer,
-lancer des suites séparées avec `--test` et un processus serveur par suite.
+`Dirty.Dummies` clears the dummy players; `Dirty.Round` restarts the round.
+**`Dirty.Process` currently degrades to Round**, it is not a fresh process per
+test. To isolate a registry you cannot restore, run separate suites with `--test`
+and one server process per suite.
 
-## 5. Dépendances et données
+## 5. Dependencies and data
 
-Déclarer dans `plugins` le plugin testé **et chaque plugin requis**. Le harnais
-vérifie qu'ils sont activés. Les bibliothèques sans classe Plugin vont dans
-`dependencies`, par exemple `0Harmony.dll`. Les tests vont dans `tests` et
-sont chargés explicitement après le chargement LabAPI.
+Declare the plugin under test **and every required plugin** under `plugins`. The
+harness checks they are enabled. Libraries without a Plugin class go under
+`dependencies`, `0Harmony.dll` for instance. Tests go under `tests` and are loaded
+explicitly after LabAPI has loaded.
 
-Une DLL ne doit figurer qu'une fois, même si plusieurs plugins en dépendent.
-Ne pas copier tout le dossier `bin/` : il peut contenir des assemblies du jeu,
-Unity ou LabAPI. Elles sont fournies par le serveur.
+A DLL must appear only once, even when several plugins depend on it. Do not copy
+the whole `bin/` directory: it may hold game, Unity or LabAPI assemblies. The
+server supplies those.
 
 ```json
 {
   "files": [
-    { "source": "fixtures/config.yml", "root": "labapiConfig", "target": "MonPlugin/config.yml" },
+    { "source": "fixtures/config.yml", "root": "labapiConfig", "target": "MyPlugin/config.yml" },
     { "source": "fixtures/scenario.json", "root": "data", "target": "scenario.json" }
   ],
   "serverSettings": { "max_players": "8" }
 }
 ```
 
-Adapter le sous-dossier de configuration au nom réellement utilisé par le plugin.
-Les données sont accessibles via `Path.Combine(Environment.CurrentDirectory,
-"test-data", "scenario.json")`. Une configuration qui référence un service réseau
-ou un chemin absolu externe reste sous la responsabilité du plugin.
+Match the configuration subdirectory to the name the plugin actually uses. The
+data is reachable through `Path.Combine(Environment.CurrentDirectory,
+"test-data", "scenario.json")`. A configuration pointing at a network service or
+an external absolute path stays the plugin's own responsibility.
 
-## 6. Dépannage
+## 6. Troubleshooting
 
-| Symptôme | Vérification |
+| Symptom | What to check |
 |---|---|
-| DLL manquante / ReflectionTypeLoadException | Lire les LoaderExceptions dans JSONL/JUnit. Ajouter la DLL à dependencies, ou le plugin requis à plugins. Vérifier les versions ; ne pas copier les assemblies du jeu depuis un autre serveur. |
-| Aucun test découvert | Utiliser list, vérifier tests, les attributs LabTesting.Fact/Theory, les filtres exacts et la cible net48. Les tests internes ne compensent pas une assembly externe vide. |
-| Port occupé | Choisir un autre --port. Le verrou LabTesting et les binds UDP/TCP refusent les collisions. |
-| Serveur bloqué | Lire stdout.log/stderr.log, vérifier l'installation native et utiliser --keep pour inspecter la copie. Le timeout produit un échec avec rapports conservés. |
-| Verdict absent | Le harnais n'a pas pu s'armer : rechercher erreur de chargement, dépendance, version LabAPI ou refus de sentinelle. |
-| Résumé présent mais workflow rouge | Vérifier sortie serveur, résultats manquants, doublons, erreurs de teardown et fail-on-skipped. Un résumé seul n'autorise pas le succès. |
-| Permission denied sous Linux | chmod +x sur le runner extrait ; vérifier les droits de l'exécutable du serveur source. Le runner conserve les modes Unix lors de la copie. |
-| Nettoyage refusé sous Windows | Un processus ou un antivirus garde un fichier ouvert. Les rapports indiquent le dossier conservé ; vérifier les processus avant de supprimer uniquement la copie labtest concernée. |
-| Le plugin lit encore un fichier personnel | Vérifier qu'il utilise les chemins LabAPI standard. Les chemins absolus codés dans le plugin ne peuvent pas être redirigés automatiquement. |
+| Missing DLL / ReflectionTypeLoadException | Read the LoaderExceptions in the JSONL or JUnit. Add the DLL to dependencies, or the required plugin to plugins. Check the versions; do not copy game assemblies from another server. |
+| No test discovered | Use list, check tests, the LabTesting.Fact/Theory attributes, the exact filters and the net48 target. The framework tests do not make up for an empty external assembly. |
+| Port in use | Pick another --port. The LabTesting lock and the UDP/TCP binds reject collisions. |
+| Server stuck | Read stdout.log and stderr.log, check the native install and use --keep to inspect the copy. A timeout produces a failure with the reports kept. |
+| Missing verdict | The harness could not arm: look for a load error, a dependency, the LabAPI version or a refused sentinel. |
+| Summary present but the workflow is red | Check the server exit code, missing results, duplicates, teardown errors and fail-on-skipped. A summary alone does not authorize success. |
+| Permission denied on Linux | chmod +x on the extracted runner; check the rights on the source server's executable. The runner preserves Unix modes when copying. |
+| Cleanup refused on Windows | A process or an antivirus holds a file open. The reports name the directory kept; check the processes before deleting only that labtest copy. |
+| The plugin still reads a personal file | Check that it uses the standard LabAPI paths. Absolute paths hardcoded in the plugin cannot be redirected automatically. |

@@ -98,7 +98,7 @@ public static class World
         if (!go.TryGetComponent(out ReferenceHub hub))
         {
             UnityEngine.Object.Destroy(go);
-            throw new InvalidOperationException("Le playerPrefab n'a pas de ReferenceHub.");
+            throw new InvalidOperationException("The playerPrefab has no ReferenceHub.");
         }
 
         hub.nicknameSync.MyNick = nick;
@@ -106,7 +106,7 @@ public static class World
         NetworkServer.AddPlayerForConnection(connection, go);
 
         await Expect.Eventually(() => hub != null && hub.IsDummy, 120.Ticks(),
-            "le dummy doit atteindre ClientInstanceMode.Dummy");
+            "the dummy must reach ClientInstanceMode.Dummy");
 
         var player = new TestPlayer(hub, connection);
         Spawned.Add(player);
@@ -182,7 +182,7 @@ public static class World
             await Expect.Eventually(
                 () => RoundRestart.UptimeRounds > before,
                 within.Count > 0 ? within : 3600.Ticks(),
-                "barrière D8 : UptimeRounds doit être incrémenté (RoundRestart.cs:163)");
+                "D8 barrier: UptimeRounds must be incremented (RoundRestart.cs:163)");
 
             if (started)
                 return;
@@ -190,7 +190,7 @@ public static class World
             await Expect.Eventually(
                 () => GameCore.RoundStart.singleton != null,
                 600.Ticks(),
-                "la scène du nouveau round doit être chargée");
+                "the new round scene must be loaded");
 
             await ForceRoundStart(within);
         }
@@ -224,14 +224,14 @@ public static class World
         {
             if (!CharacterClassManager.ForceRoundStart())
             {
-                TestContext.Fail("World.ForceRoundStart", "demande acceptée",
-                    "refusée (serveur inactif ou RoundStartingEventArgs.IsAllowed == false)", null);
+                TestContext.Fail("World.ForceRoundStart", "request accepted",
+                    "refused (server inactive or RoundStartingEventArgs.IsAllowed == false)", null);
             }
 
             await Expect.Eventually(
                 () => started || RoundSummary.RoundInProgress(),
                 within.Count > 0 ? within : 1800.Ticks(),
-                "le round doit démarrer");
+                "the round must start");
         }
         finally
         {
@@ -399,7 +399,7 @@ public sealed class RecordingDummyConnection : DummyNetworkConnection, INetProbe
     {
         int before = _sent.Count;
         await LabTesting.Expect.Eventually(() => _sent.Count > before, within,
-            "la connexion du dummy doit recevoir au moins un message");
+            "the dummy connection must receive at least one message");
     }
 
     /// <inheritdoc/>
@@ -407,7 +407,7 @@ public sealed class RecordingDummyConnection : DummyNetworkConnection, INetProbe
     {
         int before = CountOf<T>();
         await LabTesting.Expect.Eventually(() => CountOf<T>() > before, within,
-            "message " + typeof(T).Name + " attendu");
+            typeof(T).Name + " message expected");
     }
 
     /// <inheritdoc/>
