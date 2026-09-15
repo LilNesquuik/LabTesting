@@ -46,3 +46,8 @@ Les tests internes nécessitent `frameworkTests: true`. Une suite externe vide
 système. Le package NuGet est validé sous Windows depuis un cache vierge
 (restauration, compilation, découverte et 4/4 tests réels). L'exécution GitHub
 Actions reste à confirmer ; voir le relevé détaillé.
+
+## Licence
+
+[MIT](LICENSE). Les composants tiers redistribués sont listés dans
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

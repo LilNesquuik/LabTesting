@@ -7,6 +7,9 @@
     <Description>In-process tests for LabAPI plugins on SCP:SL. Includes the net48 harness, Harmony, a portable .NET 10 runner and MSBuild integration for Windows and Linux.</Description>
     <PackageTags>LabAPI;SCP-SL;testing;integration;CI</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Copyright>Copyright (c) 2026 Morgan Coyaux</Copyright>
+    <PackageProjectUrl Condition="'$(PackageProjectUrl)' == ''">https://github.com/LilNesquuik/LabTesting</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <EnableDefaultItems>false</EnableDefaultItems>
