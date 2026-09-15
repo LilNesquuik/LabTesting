@@ -13,6 +13,10 @@
 
 ## Package NuGet
 
+Les vérifications ci-dessous ont porté sur un package numéroté 1.0.0 ; la première
+version publiée est **0.1.0**, que `nuget-release.yml` revalide à l'identique sur
+les deux systèmes avant publication.
+
 `LabTesting.1.0.0.nupkg` construit par `scripts/pack-nuget.ps1` : 895 521 octets,
 16 entrées, contenu vérifié fichier par fichier par `scripts/verify-nuget.ps1`,
 SHA-256 écrit à côté. Payload : harnais net48 en `lib/net48` et `tools/harness`,

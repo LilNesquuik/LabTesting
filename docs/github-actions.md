@@ -24,7 +24,7 @@ Remplacer :
 | Entrée | Valeur |
 |---|---|
 | release-repository | propriétaire/dépôt public qui publie LabTesting |
-| release-version | version exacte sans v, par exemple 1.0.0 |
+| release-version | version exacte sans v, par exemple 0.1.0 |
 | archive-sha256 | SHA-256 de l'archive Linux de cette version |
 | config | chemin du JSON, défaut examples/labtesting.json |
 | artifact-name | préfixe unique par appel parallèle du workflow, défaut labtesting |

@@ -7,7 +7,7 @@ Windows et Linux x64.
 Un seul `PackageReference` dans le projet de tests net48 :
 
 ```xml
-<PackageReference Include="LabTesting" Version="1.0.0" PrivateAssets="all" />
+<PackageReference Include="LabTesting" Version="0.1.0" PrivateAssets="all" />
 ```
 
 ```sh

@@ -8,5 +8,5 @@ jobs:
     uses: ./.github/workflows/labtesting-reusable.yml
     with:
       release-repository: YOUR-ORG/LabTesting
-      release-version: 1.0.0
+      release-version: 0.1.0
       archive-sha256: REPLACE_WITH_LINUX_ARCHIVE_SHA256

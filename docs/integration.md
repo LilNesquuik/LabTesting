@@ -43,7 +43,7 @@ pour chaque worker parallèle. Consulter les prérequis actualisés du
 3. Ajouter le package au projet de tests net48, avec une **version publiée fixée** :
 
    ```xml
-   <PackageReference Include="LabTesting" Version="1.0.0" PrivateAssets="all" />
+   <PackageReference Include="LabTesting" Version="0.1.0" PrivateAssets="all" />
    ```
 
 4. Installer le serveur dans `.server/`, ou passer son chemin via

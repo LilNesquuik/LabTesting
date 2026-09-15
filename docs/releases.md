@@ -6,7 +6,7 @@ C'est le mode d'installation recommandé : un seul `PackageReference` apporte le
 harnais net48, Harmony, le runner portable .NET 10 et les cibles MSBuild.
 
 ```powershell
-pwsh -File scripts/pack-nuget.ps1 -Version 1.0.0 -Managed C:/scpsl/SCPSL_Data/Managed
+pwsh -File scripts/pack-nuget.ps1 -Version 0.1.0 -Managed C:/scpsl/SCPSL_Data/Managed
 ```
 
 Le script compile le harnais, publie le runner en framework-dependent, lance
@@ -41,7 +41,7 @@ d'utiliser le `GITHUB_TOKEN` du job.
 ## Archives autonomes
 
 ```powershell
-pwsh -File scripts/package.ps1 -Version 1.0.0 -Managed C:/scpsl/SCPSL_Data/Managed
+pwsh -File scripts/package.ps1 -Version 0.1.0 -Managed C:/scpsl/SCPSL_Data/Managed
 ```
 
 Sous Ubuntu, utiliser le chemin du dossier Managed installé par SteamCMD.
