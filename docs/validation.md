@@ -42,8 +42,7 @@ session : `tools/cleanup.py`, requis par la cible `LabTestingCleanup`, manquait
 dans un package construit avant l'ajout de ce fichier. Le contrôle a échoué avant
 toute exécution de tests.
 
-**Non validé** : la matrice `nuget-release.yml` sur des runners GitHub réels, faute
-de dépôt distant.
+La même validation a tourné sur des runners GitHub, voir plus bas.
 
 ## Exécutions réelles locales
 
@@ -101,26 +100,42 @@ Cette vérification syntaxique ne remplace pas une exécution GitHub Actions.
 
 ## GitHub Actions et publication
 
-**Non exécutés sur GitHub pendant cette session.** Le dépôt local n'a aucun remote
-configuré et aucun commit. Les workflows réutilisables, la validation réelle
-Windows/Ubuntu, la création d'un brouillon de release et la publication NuGet sont
-livrés, mais aucune release n'a été publiée, aucun package n'a été envoyé à
-NuGet.org et aucun check de branche n'a été configuré. Les huit fichiers YAML sont
-seulement parsés localement par `scripts/check-workflows.py`.
+Dépôt : `LilNesquuik/LabTesting`, branche `master`.
 
-Le critère « dépôt vierge obtenant un résultat sur un runner Ubuntu GitHub »
-reste donc à confirmer de bout en bout. Étapes restantes :
+`Runner checks` (compilation et vérifications sans jeu, Ubuntu et Windows) passe sur
+chaque push depuis le commit initial.
 
-1. Fournir le dépôt GitHub cible et y déposer les sources/workflows.
-2. Déclencher Real server validation (Windows et Ubuntu).
-3. Lancer `nuget-release.yml` en `workflow_dispatch` avec `publish: false` pour
-   valider le package sur les deux systèmes sans rien publier.
-4. Déclarer la policy de trusted publishing sur nuget.org et le secret NUGET_USER.
-5. Créer un tag de release, examiner puis publier le brouillon généré ; la
-   publication déclenche la publication du package.
-6. Copier `nuget-tests.yml` dans un dépôt consommateur, renseigner le projet de
+`Publish NuGet package` lancé en `workflow_dispatch` avec `publish: false`
+(run 34993885730, 15 septembre 2026) : **succès complet**.
+
+| Job | Résultat | Durée |
+|---|---|---|
+| package (windows-latest) | succès, payload et SHA-256 vérifiés | 1 min 49 |
+| validate (ubuntu-24.04) | succès, 4/4 tests sur serveur réel | 1 min 32 |
+| validate (windows-latest) | succès, 4/4 tests sur serveur réel | 2 min 17 |
+| publish | sauté, comme attendu sans release | — |
+
+Le critère « dépôt vierge obtenant un résultat sur un runner Ubuntu GitHub » est
+donc confirmé de bout en bout : SteamCMD installe le serveur, NuGet restaure le
+package et la suite d'exemple s'exécute dans le jeu.
+
+Le premier essai (run 34993397271) avait échoué sur
+`ERROR! Failed to install app '996560' (Missing configuration)` : un SteamCMD
+fraîchement téléchargé se met à jour au premier lancement et sort avant d'appliquer
+`app_update`. `scripts/install-server.ps1` et `install-server.sh` l'échauffent
+désormais avec un `+quit` à vide, réessaient et jugent le succès sur la présence
+des assemblies plutôt que sur le code de sortie.
+
+Étapes restantes :
+
+1. Déclarer la policy de trusted publishing sur nuget.org et le secret NUGET_USER.
+2. Créer un tag de release, examiner puis publier le brouillon généré ; la
+   publication déclenche la publication du package et exerce le chemin OIDC, que
+   le `workflow_dispatch` ne teste pas.
+3. Déclencher Real server validation, qui n'a pas encore tourné sur GitHub.
+4. Copier `nuget-tests.yml` dans un dépôt consommateur, renseigner le projet de
    tests et la version du package, puis vérifier une PR et rendre le check obligatoire.
-7. Tester l'exemple privé avec un vrai dépôt dépendant et une PR de fork.
+5. Tester l'exemple privé avec un vrai dépôt dépendant et une PR de fork.
 
 ## Limites connues
 
