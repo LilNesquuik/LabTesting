@@ -92,9 +92,10 @@ avec une installation SteamCMD réelle. Il est manuel et réutilisable.
 `release.yml` prépare les archives versionnées et crée un **brouillon** sur tag ;
 publier le brouillon après examen des résultats. `nuget-release.yml` construit le
 package, le valide sur Windows et Ubuntu avec un serveur réel, puis le publie sur
-NuGet.org et GitHub Packages quand la release est publiée (secret
-**NUGET_API_KEY**). Son `workflow_dispatch` avec `publish: false` fait tourner la
-validation seule.
+NuGet.org et GitHub Packages quand la release est publiée. NuGet.org utilise le
+trusted publishing OIDC : pas de clé d'API stockée, seulement le secret
+**NUGET_USER** et une policy déclarée sur nuget.org. Son `workflow_dispatch` avec
+`publish: false` fait tourner la validation seule.
 
 Sources : [workflows réutilisables](https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations),
 [artefacts](https://docs.github.com/en/actions/tutorials/store-and-share-data),

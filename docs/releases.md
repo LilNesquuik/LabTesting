@@ -26,8 +26,17 @@ Le workflow `.github/workflows/nuget-release.yml` rejoue tout cela quand une
 release est publiée, préversion comprise : packaging sous Windows, validation sur
 `windows-latest` et `ubuntu-24.04` avec un serveur SteamCMD réel, puis publication
 sur NuGet.org et GitHub Packages et ajout du `.nupkg` et de son SHA-256 à la
-release. Secret requis : **NUGET_API_KEY**. Un `workflow_dispatch` avec
-`publish: false` exécute la validation sans rien publier.
+release. Un `workflow_dispatch` avec `publish: false` exécute la validation sans
+rien publier.
+
+La publication sur NuGet.org passe par le **trusted publishing** : le job demande
+un jeton OIDC à GitHub (`id-token: write`), `NuGet/login@v1` l'échange contre une
+clé à usage unique valable une heure, et le push l'utilise immédiatement. Aucune
+clé d'API longue durée n'est stockée. Le seul secret est **NUGET_USER**, le nom de
+profil nuget.org. La policy correspondante sur nuget.org vise le dépôt
+`LilNesquuik/LabTesting`, le fichier `nuget-release.yml`, sans environment, avec le
+scope Push et le motif `LabTesting`. Le push vers GitHub Packages continue
+d'utiliser le `GITHUB_TOKEN` du job.
 
 ## Archives autonomes
 

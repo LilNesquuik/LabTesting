@@ -115,7 +115,7 @@ reste donc à confirmer de bout en bout. Étapes restantes :
 2. Déclencher Real server validation (Windows et Ubuntu).
 3. Lancer `nuget-release.yml` en `workflow_dispatch` avec `publish: false` pour
    valider le package sur les deux systèmes sans rien publier.
-4. Configurer le secret NUGET_API_KEY.
+4. Déclarer la policy de trusted publishing sur nuget.org et le secret NUGET_USER.
 5. Créer un tag de release, examiner puis publier le brouillon généré ; la
    publication déclenche la publication du package.
 6. Copier `nuget-tests.yml` dans un dépôt consommateur, renseigner le projet de
