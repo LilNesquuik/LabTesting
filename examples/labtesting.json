@@ -1,0 +1,17 @@
+{
+  "server": "../.server",
+  "harness": "../.labtesting/harness/LabTesting.dll",
+  "tests": ["SamplePlugin.Tests/bin/Release/net48/SamplePlugin.Tests.dll"],
+  "plugins": ["SamplePlugin/bin/Release/net48/SamplePlugin.dll"],
+  "dependencies": ["../.labtesting/harness/0Harmony.dll"],
+  "files": [],
+  "assemblies": ["SamplePlugin.Tests"],
+  "collections": [],
+  "testNames": [],
+  "frameworkTests": false,
+  "failOnSkipped": true,
+  "port": 7799,
+  "timeoutSeconds": 300,
+  "work": "../.labtest-work",
+  "reports": "../TestResults"
+}

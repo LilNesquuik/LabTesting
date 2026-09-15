@@ -1,0 +1,12 @@
+bin/
+obj/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+/.labtest-work/
+/TestResults/
+/dist/
+/.server/
+/.server-linux/
+/.labtesting/
+.idea/

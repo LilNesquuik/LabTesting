@@ -1,0 +1,74 @@
+name: Real server validation
+on:
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  real-server:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    env:
+      SL_REFERENCES: ${{ github.workspace }}/.server/SCPSL_Data/Managed
+      EXILED_REFERENCES: ${{ github.workspace }}/.server/SCPSL_Data/Managed
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Install Linux server
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lib32gcc-s1 lib32stdc++6 libatomic1 libgomp1 libglu1-mesa libxcursor1 libxrandr2 libxi6 libasound2t64 util-linux
+          bash scripts/install-server.sh "$GITHUB_WORKSPACE/.server" "$RUNNER_TEMP/labtesting-steamcmd"
+      - name: Install Windows server
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $steam = "$env:RUNNER_TEMP/labtesting-steamcmd"
+          New-Item -ItemType Directory -Force -Path $steam | Out-Null
+          Invoke-WebRequest https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip -OutFile "$steam/steamcmd.zip"
+          Expand-Archive "$steam/steamcmd.zip" -DestinationPath $steam
+          & "$steam/steamcmd.exe" +force_install_dir "$env:GITHUB_WORKSPACE/.server" +login anonymous +app_update 996560 validate +quit
+          if ($LASTEXITCODE -ne 0) { throw 'SteamCMD failed' }
+      - name: Build
+        shell: pwsh
+        run: |
+          dotnet build src/LabTesting -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Harness build failed' }
+          dotnet build src/LabTesting.Runner -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Runner build failed' }
+          dotnet build examples/SamplePlugin.Tests -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Sample build failed' }
+          dotnet build tests/FailureSuite -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Failure suite build failed' }
+          New-Item -ItemType Directory -Force -Path .labtesting/harness | Out-Null
+          Copy-Item src/LabTesting/bin/Release/net48/LabTesting.dll,src/LabTesting/bin/Release/net48/0Harmony.dll .labtesting/harness
+      - name: Discover external suite
+        run: dotnet run --project src/LabTesting.Runner -c Release --no-build -- list --config examples/labtesting.json
+      - name: Run external suite
+        run: dotnet run --project src/LabTesting.Runner -c Release --no-build -- run --config examples/labtesting.json
+      - name: Run framework suite
+        shell: pwsh
+        run: dotnet run --project src/LabTesting.Runner -c Release --no-build -- run --config examples/framework.json --server "$env:GITHUB_WORKSPACE/.server"
+      - name: Verify intentional failures
+        shell: pwsh
+        run: |
+          dotnet run --project src/LabTesting.Runner -c Release --no-build -- run --config tests/failures.json
+          if ($LASTEXITCODE -ne 2) { throw 'Failure suite must exit 2' }
+          ./scripts/check-failure-suite.ps1
+          exit 0
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-results-${{ matrix.os }}
+          path: TestResults/
+      - name: Recover Linux copies
+        if: always() && runner.os == 'Linux'
+        run: python3 scripts/cleanup.py "$GITHUB_WORKSPACE/.labtest-work"

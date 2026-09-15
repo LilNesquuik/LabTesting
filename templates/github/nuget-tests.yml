@@ -1,0 +1,60 @@
+# Copy as .github/workflows/tests.yml. Adapt TEST_PROJECT.
+# LabTesting's version lives only in the test project's PackageReference.
+name: Plugin tests
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      TEST_PROJECT: tests/MonPlugin.Tests/MonPlugin.Tests.csproj
+      SL_REFERENCES: ${{ github.workspace }}/.server/SCPSL_Data/Managed
+      EXILED_REFERENCES: ${{ github.workspace }}/.server/SCPSL_Data/Managed
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Install native prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lib32gcc-s1 lib32stdc++6 libatomic1 libgomp1 libglu1-mesa libxcursor1 libxrandr2 libxi6 libasound2t64 util-linux
+      - name: Install dedicated server 996560
+        run: |
+          steam="$RUNNER_TEMP/steamcmd"
+          mkdir -p "$steam"
+          curl --fail --location --retry 3 https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz -o "$steam/steamcmd.tar.gz"
+          tar -xzf "$steam/steamcmd.tar.gz" -C "$steam"
+          "$steam/steamcmd.sh" +force_install_dir "$GITHUB_WORKSPACE/.server" +login anonymous +app_update 996560 validate +quit
+          test -f "$SL_REFERENCES/Assembly-CSharp.dll"
+      # Add dependency fetch/build steps here when the tested plugin needs them.
+      - name: Restore, build and test
+        timeout-minutes: 12
+        run: |
+          dotnet build "$TEST_PROJECT" -c Release -t:LabTesting \
+            -p:LabTestingServer="$GITHUB_WORKSPACE/.server" \
+            -p:LabTestingReports="$GITHUB_WORKSPACE/TestResults" \
+            -p:LabTestingWork="$GITHUB_WORKSPACE/.labtest-work" \
+            -p:LabTestingTimeout=600
+      - name: Publish summary
+        if: always()
+        run: |
+          if [ -d TestResults ]; then
+            find TestResults -name summary.md -type f -exec cat {} \; >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: labtesting-results
+          path: TestResults/
+          if-no-files-found: warn
+      - name: Recover interrupted runs
+        if: always()
+        run: |
+          if [ -f "$(dirname "$TEST_PROJECT")/obj/project.assets.json" ]; then
+            dotnet msbuild "$TEST_PROJECT" -t:LabTestingCleanup -p:LabTestingWork="$GITHUB_WORKSPACE/.labtest-work"
+          fi

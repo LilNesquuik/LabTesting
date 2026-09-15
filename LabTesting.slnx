@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/docs/">
+    <File Path="docs/github-actions.md" />
+    <File Path="docs/integration.md" />
+    <File Path="docs/releases.md" />
+    <File Path="docs/runner.md" />
+    <File Path="docs/validation.md" />
+  </Folder>
+  <Folder Name="/examples/">
+    <Project Path="examples/SamplePlugin/SamplePlugin.csproj" />
+  </Folder>
+  <Folder Name="/packaging/">
+    <Project Path="packaging/LabTesting.Package.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/LabTesting.Runner/LabTesting.Runner.csproj" />
+    <Project Path="src/LabTesting/LabTesting.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FailureSuite/FailureSuite.csproj" />
+  </Folder>
+</Solution>

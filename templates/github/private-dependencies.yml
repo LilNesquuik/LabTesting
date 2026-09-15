@@ -1,0 +1,18 @@
+# Use instead of labtesting.yml. Copy reusable workflow alongside this file.
+name: Plugin with private dependencies
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  integration:
+    uses: ./.github/workflows/labtesting-reusable.yml
+    with:
+      release-repository: YOUR-ORG/LabTesting
+      release-version: 1.0.0
+      archive-sha256: REPLACE_WITH_LINUX_ARCHIVE_SHA256
+      dependency-repository: YOUR-ORG/RequiredPlugin
+      dependency-ref: REPLACE_WITH_FULL_COMMIT_SHA
+      dependency-build-command: dotnet build .dependencies/source/src/RequiredPlugin -c Release
+      build-command: dotnet build examples/SamplePlugin.Tests -c Release -p:LabTestingPath="$GITHUB_WORKSPACE/.labtesting/harness/LabTesting.dll"
+    secrets:
+      DEPENDENCY_TOKEN: ${{ secrets.DEPENDENCY_TOKEN }}

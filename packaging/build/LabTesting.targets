@@ -1,0 +1,48 @@
+<Project>
+  <Target Name="_LabTestingValidatePackage">
+    <Error Condition="'$(TargetFramework)' != 'net48'" Text="LabTesting requires a net48 test library. Invoke the target on that project, with -f net48 if it multi-targets." />
+    <Error Condition="!Exists('$(LabTestingRunnerPath)')" Text="LabTesting runner missing. Restore the LabTesting NuGet package." />
+  </Target>
+
+  <Target Name="_LabTestingConfigure" DependsOnTargets="_LabTestingValidatePackage">
+    <PropertyGroup>
+      <_LabTestingConfigRoot>$([MSBuild]::GetDirectoryNameOfFileAbove('$(MSBuildProjectDirectory)', 'labtesting.json'))</_LabTestingConfigRoot>
+      <LabTestingConfig Condition="'$(LabTestingConfig)' == '' And '$(_LabTestingConfigRoot)' != ''">$(_LabTestingConfigRoot)/labtesting.json</LabTestingConfig>
+      <LabTestingConfig Condition="'$(LabTestingConfig)' == ''">$(MSBuildProjectDirectory)/labtesting.json</LabTestingConfig>
+      <_LabTestingArgs>--config &quot;$(LabTestingConfig)&quot; --framework-directory &quot;$(LabTestingFrameworkDirectory)&quot; --test-assembly &quot;$(TargetPath)&quot;</_LabTestingArgs>
+      <_LabTestingArgs Condition="'$(LabTestingServer)' != ''">$(_LabTestingArgs) --server &quot;$(LabTestingServer)&quot;</_LabTestingArgs>
+      <_LabTestingArgs Condition="'$(LabTestingReports)' != ''">$(_LabTestingArgs) --reports &quot;$(LabTestingReports)&quot;</_LabTestingArgs>
+      <_LabTestingArgs Condition="'$(LabTestingWork)' != ''">$(_LabTestingArgs) --work &quot;$(LabTestingWork)&quot;</_LabTestingArgs>
+      <_LabTestingArgs Condition="'$(LabTestingPort)' != ''">$(_LabTestingArgs) --port &quot;$(LabTestingPort)&quot;</_LabTestingArgs>
+      <_LabTestingArgs Condition="'$(LabTestingTimeout)' != ''">$(_LabTestingArgs) --timeout &quot;$(LabTestingTimeout)&quot;</_LabTestingArgs>
+      <_LabTestingArgs Condition="'$(LabTestingFailOnSkipped)' == 'true'">$(_LabTestingArgs) --fail-on-skipped</_LabTestingArgs>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(LabTestingConfig)')" Text="labtesting.json not found above the test project. Set LabTestingConfig to its path." />
+    <Error Condition="!Exists('$(TargetPath)')" Text="Build the test library before running LabTesting." />
+  </Target>
+
+  <Target Name="_LabTestingExecute" DependsOnTargets="_LabTestingConfigure">
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)"
+          Command="&quot;$(LabTestingDotNetHost)&quot; &quot;$(LabTestingRunnerPath)&quot; run $(_LabTestingArgs)" />
+  </Target>
+  <Target Name="LabTesting" DependsOnTargets="Build;_LabTestingExecute" />
+  <Target Name="LabTestingList" DependsOnTargets="Build;_LabTestingConfigure">
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)"
+          Command="&quot;$(LabTestingDotNetHost)&quot; &quot;$(LabTestingRunnerPath)&quot; list $(_LabTestingArgs)" />
+  </Target>
+  <Target Name="LabTestingSelfTest" DependsOnTargets="_LabTestingValidatePackage">
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)"
+          Command="&quot;$(LabTestingDotNetHost)&quot; &quot;$(LabTestingRunnerPath)&quot; --selftest" />
+  </Target>
+  <Target Name="LabTestingCleanup" DependsOnTargets="_LabTestingValidatePackage">
+    <PropertyGroup>
+      <LabTestingPython Condition="'$(LabTestingPython)' == ''">python3</LabTestingPython>
+    </PropertyGroup>
+    <Error Condition="'$(LabTestingWork)' == ''" Text="Recovery requires an explicit LabTestingWork directory. Do not recover a directory containing active runs." />
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)"
+          Command="&quot;$(LabTestingPython)&quot; &quot;$(_LabTestingPackageRoot)/tools/cleanup.py&quot; &quot;$(LabTestingWork)&quot;" />
+  </Target>
+  <Target Name="_LabTestingAfterBuild" AfterTargets="Build"
+          Condition="'$(LabTestingRunOnBuild)' == 'true' And '$(DesignTimeBuild)' != 'true'"
+          DependsOnTargets="_LabTestingExecute" />
+</Project>

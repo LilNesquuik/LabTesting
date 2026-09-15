@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <PackageId>LabTesting</PackageId>
+    <Version Condition="'$(Version)' == ''">1.0.0</Version>
+    <Authors>LabTesting</Authors>
+    <Description>In-process tests for LabAPI plugins on SCP:SL. Includes the net48 harness, Harmony, a portable .NET 10 runner and MSBuild integration for Windows and Linux.</Description>
+    <PackageTags>LabAPI;SCP-SL;testing;integration;CI</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryType>git</RepositoryType>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <IsPackable>true</IsPackable>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Explicitly selected payload: never package the harness build directory. -->
+    <None Include="$(PayloadDirectory)/harness/LabTesting.dll" Pack="true" PackagePath="lib/net48/" />
+    <None Include="$(PayloadDirectory)/harness/LabTesting.dll" Pack="true" PackagePath="tools/harness/" />
+    <None Include="$(PayloadDirectory)/harness/0Harmony.dll" Pack="true" PackagePath="tools/harness/" />
+    <None Include="$(PayloadDirectory)/runner/labtest.dll" Pack="true" PackagePath="tools/runner/" />
+    <None Include="$(PayloadDirectory)/runner/labtest.deps.json" Pack="true" PackagePath="tools/runner/" />
+    <None Include="$(PayloadDirectory)/runner/labtest.runtimeconfig.json" Pack="true" PackagePath="tools/runner/" />
+    <None Include="build/LabTesting.props" Pack="true" PackagePath="build/" />
+    <None Include="build/LabTesting.targets" Pack="true" PackagePath="build/" />
+    <None Include="../scripts/cleanup.py" Pack="true" PackagePath="tools/" />
+    <None Include="README.md" Pack="true" PackagePath="/" />
+    <None Include="../THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="/" />
+    <None Include="$(PayloadDirectory)/manifest.json" Pack="true" PackagePath="/" />
+  </ItemGroup>
+  <Target Name="CheckPayload" BeforeTargets="Pack">
+    <Error Condition="'$(PayloadDirectory)' == '' Or !Exists('$(PayloadDirectory)/manifest.json')"
+           Text="Use scripts/pack-nuget.ps1 to build and verify the package payload first." />
+  </Target>
+</Project>

@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup>
+    <_LabTestingPackageRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..'))</_LabTestingPackageRoot>
+    <LabTestingRunnerPath>$(_LabTestingPackageRoot)/tools/runner/labtest.dll</LabTestingRunnerPath>
+    <LabTestingFrameworkDirectory>$(_LabTestingPackageRoot)/tools/harness</LabTestingFrameworkDirectory>
+    <LabTestingDotNetHost Condition="'$(LabTestingDotNetHost)' == ''">dotnet</LabTestingDotNetHost>
+    <LabTestingFailOnSkipped Condition="'$(LabTestingFailOnSkipped)' == ''">true</LabTestingFailOnSkipped>
+    <LabTestingRunOnBuild Condition="'$(LabTestingRunOnBuild)' == ''">false</LabTestingRunOnBuild>
+  </PropertyGroup>
+</Project>

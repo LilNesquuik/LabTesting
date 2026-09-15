@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>13</LangVersion>
+    <LabTestingPackageVersion Condition="'$(LabTestingPackageVersion)' == ''">1.0.0</LabTestingPackageVersion>
+    <LabTestingConfig>$(MSBuildThisFileDirectory)labtesting.json</LabTestingConfig>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="LabTesting" Version="$(LabTestingPackageVersion)" PrivateAssets="all" />
+    <ProjectReference Include="../SamplePlugin/SamplePlugin.csproj" />
+    <Reference Include="Assembly-CSharp" HintPath="$(SL_REFERENCES)/Assembly-CSharp.dll" />
+    <Reference Include="Mirror" HintPath="$(SL_REFERENCES)/Mirror.dll" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(SL_REFERENCES)/UnityEngine.CoreModule.dll" />
+    <Compile Include="../SamplePlugin.Tests/CounterTests.cs" Link="CounterTests.cs" />
+  </ItemGroup>
+</Project>

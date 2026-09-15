@@ -1,0 +1,164 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net48</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>13</LangVersion>
+        <Version>0.1.0</Version>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+    
+    <!-- Repli sur le dossier Managed du serveur dédié quand les variables d'environnement
+         ne sont pas définies : le dépôt se compile alors sans configuration préalable. -->
+    <PropertyGroup>
+        <ManagedFallback>$(ProgramFiles) (x86)\Steam\steamapps\common\SCP Secret Laboratory Dedicated Server\SCPSL_Data\Managed</ManagedFallback>
+        <ManagedFallback Condition="!Exists('$(ManagedFallback)')">C:\Program Files (x86)\Steam\steamapps\common\SCP Secret Laboratory Dedicated Server\SCPSL_Data\Managed</ManagedFallback>
+        <SL_REFERENCES Condition="'$(SL_REFERENCES)' == ''">$(ManagedFallback)</SL_REFERENCES>
+        <EXILED_REFERENCES Condition="'$(EXILED_REFERENCES)' == ''">$(ManagedFallback)</EXILED_REFERENCES>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Reference Include="System.Xml.Linq" />
+        <Reference Include="Assembly-CSharp" HintPath="$(SL_REFERENCES)\Assembly-CSharp.dll" Publicize="true" />
+        <Reference Include="AccessAPI" HintPath="$(ACCESS_API)\AccessAPI.dll" Condition="Exists('$(ACCESS_API)\AccessAPI.dll')" />
+        <Reference Include="Assembly-CSharp-firstpass" HintPath="$(EXILED_REFERENCES)\Assembly-CSharp-firstpass.dll" />
+        <Reference Include="BouncyCastle.Cryptography" HintPath="$(EXILED_REFERENCES)\BouncyCastle.Cryptography.dll" />
+        <Reference Include="CommandSystem.Core" HintPath="$(EXILED_REFERENCES)\CommandSystem.Core.dll" />
+        <Reference Include="Pooling" HintPath="$(EXILED_REFERENCES)\Pooling.dll" />
+        <Reference Include="Microsoft.CSharp" />
+        <Reference Include="Mirror" HintPath="$(EXILED_REFERENCES)\Mirror.dll" />
+        <Reference Include="Mono.Security" HintPath="$(EXILED_REFERENCES)\Mono.Security.dll" />
+        <Reference Include="mscorlib" HintPath="$(EXILED_REFERENCES)\mscorlib.dll" />
+        <Reference Include="netstandard">
+            <HintPath>$(EXILED_REFERENCES)\netstandard.dll</HintPath>
+        </Reference>
+        <Reference Include="NorthwoodLib">
+            <HintPath>$(EXILED_REFERENCES)\NorthwoodLib.dll</HintPath>
+        </Reference>
+        <Reference Include="System">
+            <HintPath>$(EXILED_REFERENCES)\System.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Collections">
+            <HintPath>$(EXILED_REFERENCES)\System.Collections.dll</HintPath>
+        </Reference>
+        <Reference Include="System.ComponentModel.DataAnnotations">
+            <HintPath>$(EXILED_REFERENCES)\System.ComponentModel.DataAnnotations.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Configuration">
+            <HintPath>$(EXILED_REFERENCES)\System.Configuration.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Core">
+            <HintPath>$(EXILED_REFERENCES)\System.Core.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Diagnostics.Debug">
+            <HintPath>$(EXILED_REFERENCES)\System.Diagnostics.Debug.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Diagnostics.StackTrace">
+            <HintPath>$(EXILED_REFERENCES)\System.Diagnostics.StackTrace.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Globalization">
+            <HintPath>$(EXILED_REFERENCES)\System.Globalization.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Globalization.Extensions">
+            <HintPath>$(EXILED_REFERENCES)\System.Globalization.Extensions.dll</HintPath>
+        </Reference>
+        <Reference Include="System.IO.Compression">
+            <HintPath>$(EXILED_REFERENCES)\System.IO.Compression.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Linq">
+            <HintPath>$(EXILED_REFERENCES)\System.Linq.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Net.Http">
+            <HintPath>$(EXILED_REFERENCES)\System.Net.Http.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Net.Primitives">
+            <HintPath>$(EXILED_REFERENCES)\System.Net.Primitives.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Runtime">
+            <HintPath>$(EXILED_REFERENCES)\System.Runtime.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Runtime.Extensions">
+            <HintPath>$(EXILED_REFERENCES)\System.Runtime.Extensions.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Runtime.Serialization">
+            <HintPath>$(EXILED_REFERENCES)\System.Runtime.Serialization.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Runtime.Serialization.Xml">
+            <HintPath>$(EXILED_REFERENCES)\System.Runtime.Serialization.Xml.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Text.RegularExpressions">
+            <HintPath>$(EXILED_REFERENCES)\System.Text.RegularExpressions.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Threading">
+            <HintPath>$(EXILED_REFERENCES)\System.Threading.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Threading.Tasks">
+            <HintPath>$(EXILED_REFERENCES)\System.Threading.Tasks.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Xml">
+            <HintPath>$(EXILED_REFERENCES)\System.Xml.dll</HintPath>
+        </Reference>
+        <Reference Include="Unity.TextMeshPro">
+            <HintPath>$(EXILED_REFERENCES)\Unity.TextMeshPro.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine">
+            <HintPath>$(EXILED_REFERENCES)\UnityEngine.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.AnimationModule">
+            <HintPath>$(EXILED_REFERENCES)\UnityEngine.AnimationModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.AudioModule">
+            <HintPath>$(EXILED_REFERENCES)\UnityEngine.AudioModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.CoreModule">
+            <HintPath>$(EXILED_REFERENCES)\UnityEngine.CoreModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.DirectorModule">
+            <HintPath>$(EXILED_REFERENCES)\UnityEngine.DirectorModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.IMGUIModule">
+            <HintPath>$(EXILED_REFERENCES)\UnityEngine.IMGUIModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.InputLegacyModule">
+            <HintPath>$(EXILED_REFERENCES)\UnityEngine.InputLegacyModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.ParticleSystemModule">
+            <HintPath>$(EXILED_REFERENCES)\UnityEngine.ParticleSystemModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.Physics2DModule">
+            <HintPath>$(EXILED_REFERENCES)\UnityEngine.Physics2DModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.PhysicsModule">
+            <HintPath>$(EXILED_REFERENCES)\UnityEngine.PhysicsModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.ScreenCaptureModule">
+            <HintPath>$(EXILED_REFERENCES)\UnityEngine.ScreenCaptureModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.SharedInternalsModule">
+            <HintPath>$(EXILED_REFERENCES)\UnityEngine.SharedInternalsModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.TextRenderingModule">
+            <HintPath>$(EXILED_REFERENCES)\UnityEngine.TextRenderingModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.UI">
+            <HintPath>$(EXILED_REFERENCES)\UnityEngine.UI.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.UIModule">
+            <HintPath>$(EXILED_REFERENCES)\UnityEngine.UIModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.UnityWebRequestAudioModule">
+            <HintPath>$(EXILED_REFERENCES)\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.UnityWebRequestModule">
+            <HintPath>$(EXILED_REFERENCES)\UnityEngine.UnityWebRequestModule.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Lib.Harmony" Version="2.3.6" />
+        <PackageReference Include="Northwood.LabAPI" Version="1.1.7" />
+        <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.2" PrivateAssets="all" />
+    </ItemGroup>
+    
+</Project>

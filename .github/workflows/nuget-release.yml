@@ -1,0 +1,157 @@
+name: Publish NuGet package
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Package version, optionally prefixed with v'
+        required: true
+        type: string
+      publish:
+        description: 'Publish to NuGet.org and GitHub Packages (false = validate only)'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: nuget-${{ github.event.release.tag_name || inputs.version }}
+  cancel-in-progress: false
+jobs:
+  package:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    outputs:
+      version: ${{ steps.version.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref }}
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        env:
+          REQUESTED_VERSION: ${{ github.event.release.tag_name || inputs.version }}
+        run: |
+          $version = $env:REQUESTED_VERSION -replace '^v', ''
+          if ($version -notmatch '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[0-9A-Za-z.-]+)?$') { throw 'Expected SemVer X.Y.Z[-prerelease]' }
+          "value=$version" >> $env:GITHUB_OUTPUT
+      - name: Install dedicated server for build references
+        shell: pwsh
+        run: |
+          $steam = "$env:RUNNER_TEMP/labtesting-steamcmd"
+          New-Item -ItemType Directory -Force -Path $steam | Out-Null
+          Invoke-WebRequest https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip -OutFile "$steam/steamcmd.zip"
+          Expand-Archive "$steam/steamcmd.zip" -DestinationPath $steam
+          & "$steam/steamcmd.exe" +force_install_dir "$env:GITHUB_WORKSPACE/.server" +login anonymous +app_update 996560 validate +quit
+          if ($LASTEXITCODE -ne 0) { throw 'SteamCMD failed' }
+      - name: Build and verify the single package
+        shell: pwsh
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.value }}
+          REPOSITORY_URL: https://github.com/${{ github.repository }}
+        run: |
+          ./scripts/pack-nuget.ps1 -Version $env:PACKAGE_VERSION -Managed "$env:GITHUB_WORKSPACE/.server/SCPSL_Data/Managed" -RepositoryUrl $env:REPOSITORY_URL
+      - name: Upload package and checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-package
+          path: |
+            dist/nuget/*.nupkg
+            dist/nuget/*.sha256
+          if-no-files-found: error
+  validate:
+    needs: package
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref }}
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/download-artifact@v4
+        with:
+          name: nuget-package
+          path: dist/nuget
+      - name: Install Linux server
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lib32gcc-s1 lib32stdc++6 libatomic1 libgomp1 libglu1-mesa libxcursor1 libxrandr2 libxi6 libasound2t64 util-linux
+          bash scripts/install-server.sh "$GITHUB_WORKSPACE/.server" "$RUNNER_TEMP/labtesting-steamcmd"
+      - name: Install Windows server
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $steam = "$env:RUNNER_TEMP/labtesting-steamcmd"
+          New-Item -ItemType Directory -Force -Path $steam | Out-Null
+          Invoke-WebRequest https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip -OutFile "$steam/steamcmd.zip"
+          Expand-Archive "$steam/steamcmd.zip" -DestinationPath $steam
+          & "$steam/steamcmd.exe" +force_install_dir "$env:GITHUB_WORKSPACE/.server" +login anonymous +app_update 996560 validate +quit
+          if ($LASTEXITCODE -ne 0) { throw 'SteamCMD failed' }
+      - name: Restore package, build consumer, list and run real tests
+        shell: pwsh
+        env:
+          PACKAGE_VERSION: ${{ needs.package.outputs.version }}
+        run: |
+          ./scripts/test-nuget-consumer.ps1 -PackageDirectory dist/nuget -Version $env:PACKAGE_VERSION -Managed "$env:GITHUB_WORKSPACE/.server/SCPSL_Data/Managed" -Server "$env:GITHUB_WORKSPACE/.server" -RunServer
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-results-${{ matrix.os }}
+          path: TestResults/
+      - name: Recover Linux runs
+        if: always() && runner.os == 'Linux'
+        run: python3 scripts/cleanup.py "$GITHUB_WORKSPACE/.labtest-work"
+  publish:
+    needs: [package, validate]
+    if: github.event_name == 'release' || inputs.publish
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/download-artifact@v4
+        with:
+          name: nuget-package
+          path: nupkg
+      - name: Publish to NuGet.org and GitHub Packages
+        shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          PACKAGE_OWNER: ${{ github.repository_owner }}
+        run: |
+          if (!$env:NUGET_API_KEY) { throw 'Configure the NUGET_API_KEY repository secret.' }
+          foreach ($package in Get-ChildItem nupkg -Filter '*.nupkg') {
+            dotnet nuget push $package.FullName --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+            if ($LASTEXITCODE -ne 0) { throw 'NuGet.org publish failed' }
+            dotnet nuget push $package.FullName --api-key $env:GH_TOKEN --source "https://nuget.pkg.github.com/$env:PACKAGE_OWNER/index.json" --skip-duplicate
+            if ($LASTEXITCODE -ne 0) { throw 'GitHub Packages publish failed' }
+          }
+      - name: Attach NuGet package and checksum to the release
+        if: github.event_name == 'release'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          $files = @(Get-ChildItem nupkg -File | ForEach-Object FullName)
+          gh release upload $env:RELEASE_TAG @files --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'Release upload failed' }
