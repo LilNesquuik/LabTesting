@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using LabApi.Features.Wrappers;
 using Mirror;
 using NetworkManagerUtils.Dummies;
 using PlayerRoles;
@@ -105,6 +101,8 @@ public static class World
         var connection = new RecordingDummyConnection();
         NetworkServer.AddPlayerForConnection(connection, go);
 
+        // Unity overloads ==: a destroyed hub compares equal to null while the reference is not.
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalse
         await Expect.Eventually(() => hub != null && hub.IsDummy, 120.Ticks(),
             "the dummy must reach ClientInstanceMode.Dummy");
 

@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using PlayerRoles;
 
 namespace LabTesting.Tests;
@@ -116,7 +115,7 @@ public sealed class CommandTests
     [Fact]
     public async Task An_unknown_command_is_reported_not_thrown()
     {
-        CommandResult result = Commands.Run("commande_qui_nexiste_pas_" + Pump.Tick);
+        CommandResult result = Commands.Run("no_such_command_" + Pump.Tick);
 
         Assert.False(result.Success, "an unknown command does not succeed");
         Assert.True(result.Response.Length > 0, "and it explains why");

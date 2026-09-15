@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 
 namespace LabTesting;
 
@@ -232,7 +230,7 @@ public static class Swallowed
     /// Gets the exceptions captured since the current test started. Empty between tests.
     /// </summary>
     public static IReadOnlyList<SwallowedError> DuringCurrentTest =>
-        TestContext.Current?.Swallowed ?? (IReadOnlyList<SwallowedError>)Array.Empty<SwallowedError>();
+        TestContext.Current?.Swallowed ?? Array.Empty<SwallowedError>();
 
     /// <summary>
     /// Fails the test if LabAPI swallowed any exception while it was running.
@@ -245,7 +243,7 @@ public static class Swallowed
     /// MainThreadDispatcher.Dispatch (ServerConsole.cs:1222) and is therefore delayed by at least
     /// one frame, so reading without yielding would miss the very exception being looked for.
     /// </remarks>
-    public static async System.Threading.Tasks.Task AssertNone(Ticks settle = default)
+    public static async Task AssertNone(Ticks settle = default)
     {
         await Expect.Tick(settle.Count > 0 ? settle.Count : 1);
 
@@ -288,6 +286,8 @@ internal sealed class SwallowedSink : IOutput
     {
         try
         {
+            // The game calls this logging hook and is free to hand us null.
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
             if (text == null || !text.StartsWith(ErrorPrefix, StringComparison.Ordinal))
                 return;
 

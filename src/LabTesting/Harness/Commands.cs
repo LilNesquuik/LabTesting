@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using CommandSystem;
 using LabApi.Loader;
 using LabApi.Loader.Features.Plugins;
@@ -15,7 +13,9 @@ public readonly struct CommandResult
     /// <summary>
     /// Initializes a new instance of the <see cref="CommandResult"/> structure.
     /// </summary>
-    public CommandResult(bool success, string response)
+    /// <param name="success">Whether the command reported success.</param>
+    /// <param name="response">The command response; null is accepted and stored as empty.</param>
+    public CommandResult(bool success, string? response)
     {
         Success = success;
         Response = response ?? string.Empty;
@@ -130,7 +130,7 @@ public static class Commands
     /// invocation has none of the try/catch the real dispatcher provides, and a throwing command
     /// is a test finding, not a harness failure.
     /// </remarks>
-    public static CommandResult Run(ICommand command, ICommandSender sender, params string[] args)
+    public static CommandResult Run(ICommand command, ICommandSender sender, params string[]? args)
     {
         var segment = new ArraySegment<string>(args ?? Array.Empty<string>());
         try

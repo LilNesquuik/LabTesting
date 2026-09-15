@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.Reflection;
-using System.Threading.Tasks;
 using LabApi.Features.Console;
 
 namespace LabTesting;
@@ -37,7 +34,7 @@ public static class Runner
             try
             {
                 // Yield until the synchronous LabAPI plugin loading cycle has completed.
-                await Expect.Frame(1);
+                await Expect.Frame();
                 var request = new SuiteRequest();
                 request.CheckPlugins();
                 List<TestCase> plan = request.Plan();

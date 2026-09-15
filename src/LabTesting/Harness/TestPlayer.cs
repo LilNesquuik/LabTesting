@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using LabApi.Features.Wrappers;
 using NetworkManagerUtils.Dummies;
 using PlayerRoles;
@@ -64,6 +61,8 @@ public sealed class TestPlayer
     {
         Player.SetRole(role);
         await Expect.Eventually(
+            // Unity overloads ==: a destroyed hub compares equal to null while the reference is not.
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
             () => Hub != null && Hub.roleManager.CurrentRole != null && Hub.roleManager.CurrentRole.RoleTypeId == role,
             120.Ticks(),
             "role " + role + " must actually be assigned");

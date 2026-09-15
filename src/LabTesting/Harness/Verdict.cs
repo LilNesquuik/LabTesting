@@ -1,9 +1,5 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Text;
-using System.Linq;
 
 namespace LabTesting;
 
@@ -52,7 +48,7 @@ public sealed class Verdict : IDisposable
         Path = path;
         string? dir = System.IO.Path.GetDirectoryName(path);
         if (!string.IsNullOrEmpty(dir))
-            Directory.CreateDirectory(dir!);
+            Directory.CreateDirectory(dir);
 
         _writer = new StreamWriter(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read))
         {
@@ -120,6 +116,7 @@ public sealed class Verdict : IDisposable
     /// <param name="durationTicks">How many ticks it took.</param>
     /// <param name="appliedIsolation">The isolation level actually used.</param>
     /// <param name="escalated">Whether that level was raised because a previous test drifted.</param>
+    /// <param name="durationMilliseconds">Wall-clock duration, zero when it was not measured.</param>
     public void WriteTest(
         TestCase test,
         TestContext context,

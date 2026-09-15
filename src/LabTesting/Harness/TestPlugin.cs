@@ -1,5 +1,3 @@
-using System;
-using System.IO;
 using GameCore;
 using LabApi.Features.Console;
 using LabApi.Loader.Features.Plugins;
@@ -92,7 +90,7 @@ public sealed class TestPlugin : Plugin
         Sink = null;
     }
 
-    private static async System.Threading.Tasks.Task Run(string verdictPath)
+    private static async Task Run(string verdictPath)
     {
         try
         {

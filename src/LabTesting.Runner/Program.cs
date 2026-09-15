@@ -14,7 +14,7 @@ internal static class Program
             if (args.SequenceEqual(new[] { "--selftest-sleeper" })) { await Task.Delay(60000); return 0; }
             if (args.SequenceEqual(new[] { "--selftest-parent" }))
             {
-                using var child = System.Diagnostics.Process.Start(SelfTest.SelfStart("--selftest-sleeper"))!;
+                using var child = Process.Start(SelfTest.SelfStart("--selftest-sleeper"))!;
                 Console.WriteLine(child.Id);
                 await Task.Delay(60000);
                 return 0;
@@ -22,10 +22,13 @@ internal static class Program
             if (args.SequenceEqual(new[] { "--selftest" })) return SelfTest.Run();
             var o = Options.Parse(args);
             using var cancellation = new CancellationTokenSource();
+            // Both handlers are unhooked before the using scope ends; ReSharper cannot see it.
+            // ReSharper disable AccessToDisposedClosure
             ConsoleCancelEventHandler cancel = (_, e) => { e.Cancel = true; cancellation.Cancel(); };
             Console.CancelKeyPress += cancel;
             using var term = OperatingSystem.IsWindows() ? null :
                 PosixSignalRegistration.Create(PosixSignal.SIGTERM, c => { c.Cancel = true; cancellation.Cancel(); });
+            // ReSharper restore AccessToDisposedClosure
             try { return await Run(o, cancellation.Token); }
             finally { Console.CancelKeyPress -= cancel; }
         }
@@ -116,12 +119,16 @@ internal static class Program
         using var stderr = new FileStream(Path.Combine(reports, "stderr.log"), FileMode.Create);
         cancellation.ThrowIfCancellationRequested();
         process.Start();
+        // Kill() is wired to ProcessExit and to cancellation, so it can fire after the using
+        // scope disposed these. That is the point, and the catch below covers the race.
+        // ReSharper disable AccessToDisposedClosure
         void Kill()
         {
             containment.Dispose();
             try { if (!process.HasExited) process.Kill(entireProcessTree: true); }
             catch (Exception e) when (e is InvalidOperationException or System.ComponentModel.Win32Exception) { }
         }
+        // ReSharper restore AccessToDisposedClosure
         EventHandler onExit = (_, _) => Kill();
         AppDomain.CurrentDomain.ProcessExit += onExit;
         using var registration = cancellation.Register(Kill);

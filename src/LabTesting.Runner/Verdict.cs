@@ -15,12 +15,12 @@ internal sealed class Verdict
     public List<string> Lines { get; } = [];
     internal Dictionary<string, string> Results { get; } = new(StringComparer.Ordinal);
     internal Dictionary<string, string> Plan { get; } = new(StringComparer.Ordinal);
-    private string? metadata;
-    private bool list;
+    private string? _metadata;
+    private bool _list;
 
     public static Verdict Parse(IEnumerable<string> jsonl, bool listOnly = false)
     {
-        var v = new Verdict { list = listOnly };
+        var v = new Verdict { _list = listOnly };
         bool planSeen = false;
         string? summary = null;
         foreach (var raw in jsonl)
@@ -39,7 +39,7 @@ internal sealed class Verdict
                     case "plan":
                         if (planSeen || v.Results.Count > 0) throw new FormatException("Duplicate or late plan.");
                         planSeen = true;
-                        v.metadata = raw;
+                        v._metadata = raw;
                         if (root.GetProperty("list").GetBoolean() != listOnly) throw new FormatException("Wrong plan mode.");
                         foreach (var test in root.GetProperty("tests").EnumerateArray())
                         {
@@ -84,7 +84,7 @@ internal sealed class Verdict
             foreach (var pair in new[] { ("passed", v.Passed), ("failed", v.Failed), ("skipped", v.Skipped), ("errors", v.Errors) })
                 if (!TryNumber(summary, pair.Item1, out var n) || n != pair.Item2)
                     v.Problems.Add("Inconsistent summary counter: " + pair.Item1);
-            if (Field(summary, "harnessError") is string error) v.Problems.Add(error);
+            if (Field(summary, "harnessError") is { } error) v.Problems.Add(error);
         }
         return v;
     }
@@ -93,15 +93,15 @@ internal sealed class Verdict
 
     public void WriteReports(string directory)
     {
-        var suite = new XElement("testsuite", new XAttribute("name", list ? "LabTesting discovery" : "LabTesting"));
+        var suite = new XElement("testsuite", new XAttribute("name", _list ? "LabTesting discovery" : "LabTesting"));
         var properties = new XElement("properties");
-        if (metadata != null)
+        if (_metadata != null)
             foreach (string name in new[] { "serverVersion", "frameworkVersion", "labapiVersion", "harmonyVersion" })
-                properties.Add(new XElement("property", new XAttribute("name", name), new XAttribute("value", Field(metadata, name) ?? "unknown")));
+                properties.Add(new XElement("property", new XAttribute("name", name), new XAttribute("value", Field(_metadata, name) ?? "unknown")));
         foreach (var assembly in Plan.Values.Select(p => Field(p, "assembly")).Distinct())
             properties.Add(new XElement("property", new XAttribute("name", "testAssembly"), new XAttribute("value", assembly ?? "unknown")));
         suite.Add(properties);
-        if (!list)
+        if (!_list)
         {
             foreach (var entry in Plan)
             {
@@ -139,14 +139,14 @@ internal sealed class Verdict
         {
             Results.TryGetValue(entry.Key, out var result);
             lines.Add("| " + Safe(entry.Key) + " | " + Safe(Field(entry.Value, "collection") ?? "") + " | " +
-                (result == null ? list ? "discovered" : "missing" : Field(result, "outcome")) + " | " +
+                (result == null ? _list ? "discovered" : "missing" : Field(result, "outcome")) + " | " +
                 (result == null ? "—" : Number(result, "durationMilliseconds")) + " |");
             if (result != null && Field(result, "outcome") != "passed")
                 details.Add("\n<details><summary>" + Safe(entry.Key) + "</summary><pre>" + Safe(result) + "</pre></details>\n");
         }
         lines.AddRange(details);
         foreach (var problem in Problems) lines.Add("\n- " + Safe(problem));
-        if (metadata != null) lines.Add("\n<details><summary>Versions and plan</summary><pre>" + Safe(metadata) + "</pre></details>");
+        if (_metadata != null) lines.Add("\n<details><summary>Versions and plan</summary><pre>" + Safe(_metadata) + "</pre></details>");
         File.WriteAllLines(Path.Combine(directory, "summary.md"), lines);
     }
 

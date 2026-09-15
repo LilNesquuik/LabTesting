@@ -1,4 +1,3 @@
-using System;
 
 namespace LabTesting;
 
@@ -184,12 +183,12 @@ public interface IAsyncLifetime
     /// <summary>
     /// Runs before the test method.
     /// </summary>
-    System.Threading.Tasks.Task InitializeAsync();
+    Task InitializeAsync();
 
     /// <summary>
     /// Runs after the test method, including when it failed.
     /// </summary>
-    System.Threading.Tasks.Task DisposeAsync();
+    Task DisposeAsync();
 }
 
 /// <summary>
@@ -283,7 +282,7 @@ public static class Assert
     /// </summary>
     public static void Equal<T>(T expected, T actual)
     {
-        if (!System.Collections.Generic.EqualityComparer<T>.Default.Equals(expected, actual))
+        if (!EqualityComparer<T>.Default.Equals(expected, actual))
             TestContext.Fail("Assert.Equal", Describe(expected), Describe(actual), null);
     }
 

@@ -9,19 +9,19 @@ namespace LabTesting.Runner;
 // Linux launches in a separate session; killpg also reaches children reparented to init.
 internal sealed class ProcessContainment : IDisposable
 {
-    private SafeFileHandle? job;
-    private int group;
-    private readonly object gate = new();
-    private bool disposed;
+    private SafeFileHandle? _job;
+    private int _group;
+    private readonly object _gate = new();
+    private bool _disposed;
 
     internal void Attach(Process process)
     {
-        lock (gate)
+        lock (_gate)
         {
-        ObjectDisposedException.ThrowIf(disposed, this);
-        if (!OperatingSystem.IsWindows()) { group = process.Id; return; }
-        job = CreateJobObject(IntPtr.Zero, null);
-        if (job.IsInvalid) throw new Win32Exception(Marshal.GetLastWin32Error());
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (!OperatingSystem.IsWindows()) { _group = process.Id; return; }
+        _job = CreateJobObject(IntPtr.Zero, null);
+        if (_job.IsInvalid) throw new Win32Exception(Marshal.GetLastWin32Error());
         var limits = new ExtendedLimitInformation();
         limits.BasicLimitInformation.LimitFlags = 0x2000; // JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
         int size = Marshal.SizeOf<ExtendedLimitInformation>();
@@ -29,8 +29,8 @@ internal sealed class ProcessContainment : IDisposable
         try
         {
             Marshal.StructureToPtr(limits, memory, false);
-            if (!SetInformationJobObject(job, 9, memory, (uint)size) ||
-                !AssignProcessToJobObject(job, process.Handle))
+            if (!SetInformationJobObject(_job, 9, memory, (uint)size) ||
+                !AssignProcessToJobObject(_job, process.Handle))
                 throw new Win32Exception(Marshal.GetLastWin32Error());
         }
         finally { Marshal.FreeHGlobal(memory); }
@@ -39,14 +39,14 @@ internal sealed class ProcessContainment : IDisposable
 
     public void Dispose()
     {
-        lock (gate)
+        lock (_gate)
         {
-        if (disposed) return;
-        disposed = true;
-        job?.Dispose();
-        job = null;
-        if (group > 0 && OperatingSystem.IsLinux()) kill(-group, 9);
-        group = 0;
+        if (_disposed) return;
+        _disposed = true;
+        _job?.Dispose();
+        _job = null;
+        if (_group > 0 && OperatingSystem.IsLinux()) kill(-_group, 9);
+        _group = 0;
         }
     }
 
