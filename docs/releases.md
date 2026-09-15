@@ -6,7 +6,7 @@ This is the recommended way to install: a single `PackageReference` brings the
 net48 harness, Harmony, the portable .NET 10 runner and the MSBuild targets.
 
 ```powershell
-pwsh -File scripts/pack-nuget.ps1 -Version 0.1.1 -Managed C:/scpsl/SCPSL_Data/Managed
+pwsh -File scripts/pack-nuget.ps1 -Version 0.2.0 -Managed C:/scpsl/SCPSL_Data/Managed
 ```
 
 The script builds the harness, publishes the runner framework-dependent, runs
@@ -43,7 +43,7 @@ pattern. The push to GitHub Packages keeps using the job's `GITHUB_TOKEN`.
 ## Standalone archives
 
 ```powershell
-pwsh -File scripts/package.ps1 -Version 0.1.1 -Managed C:/scpsl/SCPSL_Data/Managed
+pwsh -File scripts/package.ps1 -Version 0.2.0 -Managed C:/scpsl/SCPSL_Data/Managed
 ```
 
 The script needs NuGet network access to restore the self-contained .NET runtimes.

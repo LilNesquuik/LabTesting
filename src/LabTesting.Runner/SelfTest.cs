@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.Xml.Linq;
+
 namespace LabTesting.Runner;
 
 /// <summary>
@@ -63,13 +66,12 @@ internal static class SelfTest
         Check(ref failures, "decoy key", "failed", Verdict.Field(decoy, "outcome"));
 
         // Deriving the verdict.
-        Verdict all = Verdict.Parse(new[]
-        {
+        Verdict all = Verdict.Parse([
             """{"kind":"plan","list":false,"tests":[{"id":"A.b","collection":"C"},{"id":"A.c","collection":"C"}]}""",
             passed,
             failed,
             """{"kind":"summary","passed":1,"failed":1,"skipped":0,"errors":0}"""
-        });
+        ]);
 
         Check(ref failures, "summary present", true, all.HasSummary);
         Check(ref failures, "passed", 1, all.Passed);
@@ -77,12 +79,13 @@ internal static class SelfTest
         Check(ref failures, "rendered lines", 2, all.Lines.Count);
         Check(ref failures, "no protocol error", 0, all.Problems.Count);
         Check(ref failures, "assertion failure exit code", 1, all.ExitCode(false));
+        Check(ref failures, "summary line", "1 passed, 1 failed, 0 skipped, 0 errors", all.Summary);
 
         const string plan = """{"kind":"plan","list":false,"tests":[{"id":"A.b","collection":"C"}]}""";
         const string summary = """{"kind":"summary","passed":1,"failed":0,"skipped":0,"errors":0}""";
-        var valid = Verdict.Parse(new[] { plan, passed, summary });
+        Verdict valid = Verdict.Parse([plan, passed, summary]);
         Check(ref failures, "valid suite", 0, valid.ExitCode(false));
-        foreach (var corrupt in new[]
+        foreach (string[] corrupt in new[]
         {
             new[] { passed, summary },
             new[] { plan, summary },
@@ -95,15 +98,20 @@ internal static class SelfTest
             new[] { """{"kind":"plan","list":false,"tests":[]}""", """{"kind":"summary","passed":0,"failed":0,"skipped":0,"errors":0}""" }
         })
             Check(ref failures, "corrupt verdict rejected", 2, Verdict.Parse(corrupt).ExitCode(false));
-        var skip = Verdict.Parse(new[] { plan,
+        Verdict skip = Verdict.Parse([
+            plan,
             """{"id":"A.b","collection":"C","outcome":"skipped","skip":"raison"}""",
-            """{"kind":"summary","passed":0,"failed":0,"skipped":1,"errors":0}""" });
+            """{"kind":"summary","passed":0,"failed":0,"skipped":1,"errors":0}"""
+        ]);
         Check(ref failures, "skip accepted", 0, skip.ExitCode(false));
         Check(ref failures, "skip rejected", 1, skip.ExitCode(true));
-        var list = Verdict.Parse(new[] { plan.Replace("false", "true"),
-            """{"kind":"summary","passed":0,"failed":0,"skipped":0,"errors":0}""" }, true);
+        Verdict list = Verdict.Parse([
+            plan.Replace("false", "true"),
+            """{"kind":"summary","passed":0,"failed":0,"skipped":0,"errors":0}"""
+        ], true);
         Check(ref failures, "list", 0, list.ExitCode(false));
-        foreach (var path in new[] { "../escape", "a/../../escape", "/absolute", "C:\\escape", "a\\..\\escape" })
+        Check(ref failures, "list summary line", "1 discovered", list.Summary);
+        foreach (string path in new[] { "../escape", "a/../../escape", "/absolute", "C:\\escape", "a\\..\\escape" })
         {
             try { Deployment.Under(Path.GetTempPath(), path); Check(ref failures, "traversal rejected", true, false); }
             catch (ArgumentException) { }
@@ -112,15 +120,18 @@ internal static class SelfTest
         Directory.CreateDirectory(reports);
         try
         {
-            Verdict.Parse(new[] { plan }).WriteReports(reports);
-            var xml = System.Xml.Linq.XDocument.Load(Path.Combine(reports, "junit.xml"));
+            Verdict.Parse([plan]).WriteReports(reports);
+            XDocument xml = System.Xml.Linq.XDocument.Load(Path.Combine(reports, "junit.xml"));
             Check(ref failures, "partial report in error", true, xml.Descendants("error").Any());
         }
         finally { Deployment.DeleteOwned(reports); }
         CheckProcessTree(ref failures);
 
-        Verdict truncated = Verdict.Parse(new[] { passed });
+        Verdict truncated = Verdict.Parse([passed]);
         Check(ref failures, "no summary", false, truncated.HasSummary);
+        // A run that produced nothing must not read as a clean "0 failed" in the log.
+        Check(ref failures, "problems surface in the summary line",
+            "0 passed, 0 failed, 0 skipped, 0 errors, 3 infrastructure problem(s)", truncated.Summary);
 
         Console.WriteLine(failures == 0
             ? "[labtest] selftest: every check passes."
@@ -141,7 +152,7 @@ internal static class SelfTest
     internal static System.Diagnostics.ProcessStartInfo SelfStart(string argument, bool session = false)
     {
         string executable = Environment.ProcessPath!;
-        var start = new System.Diagnostics.ProcessStartInfo(executable) { UseShellExecute = false };
+        ProcessStartInfo start = new System.Diagnostics.ProcessStartInfo(executable) { UseShellExecute = false };
         if (session && OperatingSystem.IsLinux())
         {
             start.FileName = "/usr/bin/setsid";
@@ -155,10 +166,10 @@ internal static class SelfTest
 
     private static void CheckProcessTree(ref int failures)
     {
-        var start = SelfStart("--selftest-parent", session: true);
+        ProcessStartInfo start = SelfStart("--selftest-parent", session: true);
         start.RedirectStandardOutput = true;
-        using var parent = System.Diagnostics.Process.Start(start)!;
-        using var containment = new ProcessContainment();
+        using Process parent = System.Diagnostics.Process.Start(start)!;
+        using ProcessContainment containment = new ProcessContainment();
         System.Diagnostics.Process? child = null;
         try
         {

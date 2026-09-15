@@ -21,9 +21,9 @@ public sealed class Pump : MonoBehaviour
 {
     private static Pump? _instance;
 
-    private readonly List<Waiter> _tickWaiters = new List<Waiter>();
-    private readonly List<Waiter> _frameWaiters = new List<Waiter>();
-    private readonly List<Waiter> _ready = new List<Waiter>();
+    private readonly List<Waiter> _tickWaiters = [];
+    private readonly List<Waiter> _frameWaiters = [];
+    private readonly List<Waiter> _ready = [];
     private PumpContext _context = null!;
     private SynchronizationContext? _previousContext;
 
@@ -60,7 +60,7 @@ public sealed class Pump : MonoBehaviour
         if (_instance != null)
             return _instance;
 
-        var go = new GameObject("LabTesting.Pump");
+        GameObject go = new GameObject("LabTesting.Pump");
         DontDestroyOnLoad(go);
         _instance = go.AddComponent<Pump>();
         return _instance;
@@ -149,7 +149,7 @@ public sealed class Pump : MonoBehaviour
 
     private static Task Enqueue(List<Waiter> waiters, Func<bool> isDone)
     {
-        var waiter = new Waiter(isDone, TestContext.Current);
+        Waiter waiter = new Waiter(isDone, TestContext.Current);
         waiters.Add(waiter);
         return waiter.Task;
     }
@@ -195,8 +195,7 @@ public sealed class Pump : MonoBehaviour
     /// </summary>
     private sealed class Waiter
     {
-        private readonly TaskCompletionSource<bool> _tcs =
-            new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource<bool> _tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public Waiter(Func<bool> isDone, TestContext? owner)
         {
@@ -237,8 +236,7 @@ public sealed class Pump : MonoBehaviour
         // cannot freeze the server. Raise it if a legitimate suite ever exceeds it.
         private const int MaxPerDrain = 512;
 
-        private readonly Queue<KeyValuePair<SendOrPostCallback, object?>> _queue =
-            new Queue<KeyValuePair<SendOrPostCallback, object?>>();
+        private readonly Queue<KeyValuePair<SendOrPostCallback, object?>> _queue = new();
 
         public override void Post(SendOrPostCallback d, object? state)
         {

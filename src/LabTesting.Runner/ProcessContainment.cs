@@ -22,7 +22,7 @@ internal sealed class ProcessContainment : IDisposable
         if (!OperatingSystem.IsWindows()) { _group = process.Id; return; }
         _job = CreateJobObject(IntPtr.Zero, null);
         if (_job.IsInvalid) throw new Win32Exception(Marshal.GetLastWin32Error());
-        var limits = new ExtendedLimitInformation();
+        ExtendedLimitInformation limits = new ExtendedLimitInformation();
         limits.BasicLimitInformation.LimitFlags = 0x2000; // JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
         int size = Marshal.SizeOf<ExtendedLimitInformation>();
         IntPtr memory = Marshal.AllocHGlobal(size);

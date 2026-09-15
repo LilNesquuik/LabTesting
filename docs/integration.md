@@ -44,7 +44,7 @@ the current prerequisites for the
 3. Add the package to the net48 test project, with a **pinned published version**:
 
    ```xml
-   <PackageReference Include="LabTesting" Version="0.1.1" PrivateAssets="all" />
+   <PackageReference Include="LabTesting" Version="0.2.0" PrivateAssets="all" />
    ```
 
 4. Install the server into `.server/`, or pass its path through

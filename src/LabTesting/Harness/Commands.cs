@@ -132,7 +132,7 @@ public static class Commands
     /// </remarks>
     public static CommandResult Run(ICommand command, ICommandSender sender, params string[]? args)
     {
-        var segment = new ArraySegment<string>(args ?? Array.Empty<string>());
+        ArraySegment<string> segment = new ArraySegment<string>(args ?? []);
         try
         {
             bool success = command.Execute(segment, sender, out string response);
@@ -157,7 +157,7 @@ public static class Commands
     public static IReadOnlyList<ICommand> Of(Plugin plugin)
     {
         if (!CommandLoader.RegisteredCommands.TryGetValue(plugin, out IEnumerable<ICommand> commands))
-            return Array.Empty<ICommand>();
+            return [];
 
         return new List<ICommand>(commands);
     }

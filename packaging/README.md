@@ -3,12 +3,17 @@
 One package to test a LabAPI plugin inside a real SCP:SL server, on Windows and
 Linux. It carries the net48 harness, Harmony 2.3.6, the portable .NET 10 runner
 and the MSBuild targets. Install the .NET 10 SDK and the SteamCMD dedicated
-server 996560 separately.
+server 996560 separately: `tools/server/install-server.sh <server> <steamcmd>`
+and `tools/server/install-server.ps1 -Server <dir> -SteamCmd <dir>` inside the
+package do that, including the SteamCMD warm-up and the retry CI needs.
+
+Harmony is a NuGet dependency pinned to `[2.3.6]`: LabAPI refuses a plugin built
+against another version, so a mismatch now fails the restore instead of the run.
 
 In the net48 test project:
 
 ```xml
-<PackageReference Include="LabTesting" Version="0.1.1" PrivateAssets="all" />
+<PackageReference Include="LabTesting" Version="0.2.0" PrivateAssets="all" />
 ```
 
 Pin the published version you chose. The NuGet restore installs the whole

@@ -40,6 +40,8 @@ $files = @(
     @{ path = 'build/LabTesting.props'; source = "$repository/packaging/build/LabTesting.props" }
     @{ path = 'build/LabTesting.targets'; source = "$repository/packaging/build/LabTesting.targets" }
     @{ path = 'tools/cleanup.py'; source = "$repository/scripts/cleanup.py" }
+    @{ path = 'tools/server/install-server.sh'; source = "$repository/scripts/install-server.sh" }
+    @{ path = 'tools/server/install-server.ps1'; source = "$repository/scripts/install-server.ps1" }
     @{ path = 'README.md'; source = "$repository/packaging/README.md" }
     @{ path = 'THIRD-PARTY-NOTICES.md'; source = "$repository/THIRD-PARTY-NOTICES.md" }
 ) | ForEach-Object {

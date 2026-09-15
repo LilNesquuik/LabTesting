@@ -145,7 +145,7 @@ public static class Expect
         where T2 : EventArgs
     {
         RefusePerf("Expect.Events");
-        var recorder = new EventRecorder();
+        EventRecorder recorder = new EventRecorder();
         recorder.Watch<T1>();
         recorder.Watch<T2>();
         return recorder;
@@ -160,7 +160,7 @@ public static class Expect
         where T3 : EventArgs
     {
         RefusePerf("Expect.Events");
-        var recorder = new EventRecorder();
+        EventRecorder recorder = new EventRecorder();
         recorder.Watch<T1>();
         recorder.Watch<T2>();
         recorder.Watch<T3>();
@@ -177,7 +177,7 @@ public static class Expect
         where T4 : EventArgs
     {
         RefusePerf("Expect.Events");
-        var recorder = new EventRecorder();
+        EventRecorder recorder = new EventRecorder();
         recorder.Watch<T1>();
         recorder.Watch<T2>();
         recorder.Watch<T3>();
@@ -254,9 +254,9 @@ public interface IEventRecorder : IDisposable
 
 internal sealed class EventRecorder : IEventRecorder
 {
-    private readonly List<IDisposable> _hooks = new List<IDisposable>();
-    private readonly List<Type> _watched = new List<Type>();
-    private readonly List<Type> _seen = new List<Type>();
+    private readonly List<IDisposable> _hooks = [];
+    private readonly List<Type> _watched = [];
+    private readonly List<Type> _seen = [];
 
     public void Watch<T>() where T : EventArgs
     {
@@ -316,7 +316,7 @@ internal sealed class EventRecorder : IEventRecorder
 
     private static string[] Names(List<Type> types)
     {
-        var names = new string[types.Count];
+        string[] names = new string[types.Count];
         for (int i = 0; i < types.Count; i++)
             names[i] = types[i].Name;
         return names;
@@ -347,14 +347,14 @@ public static class EventCatalog
     /// plugin loading, which is too early for a test to observe.
     /// </remarks>
     public static readonly string[] NeverRaisedByGame =
-    {
+    [
         "PlayerSearchedAmmoEventArgs",
         "PlayerSearchedArmorEventArgs",
         "PickupCreatedEventArgs",
         "PickupDestroyedEventArgs",
         "CassieAnnouncingEventArgs",
         "CassieAnnouncedEventArgs"
-    };
+    ];
 
     private static Dictionary<Type, EventInfo> Table
     {
@@ -363,7 +363,7 @@ public static class EventCatalog
             if (_byArgs != null)
                 return _byArgs;
 
-            var table = new Dictionary<Type, EventInfo>();
+            Dictionary<Type, EventInfo> table = new Dictionary<Type, EventInfo>();
             Assembly labApi = typeof(LabApi.Events.Handlers.ServerEvents).Assembly;
 
             foreach (Type type in labApi.GetTypes())

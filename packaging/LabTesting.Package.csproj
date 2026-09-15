@@ -13,9 +13,9 @@
     <RepositoryType>git</RepositoryType>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <EnableDefaultItems>false</EnableDefaultItems>
-    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <IsPackable>true</IsPackable>
-    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <!-- NU5111: install-server.ps1 is a tool the user runs, not a packages.config install hook. -->
+    <NoWarn>$(NoWarn);NU5128;NU5111</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <!-- Explicitly selected payload: never package the harness build directory. -->
@@ -30,9 +30,17 @@
     <None Include="build/LabTesting.props" Pack="true" PackagePath="build/" />
     <None Include="build/LabTesting.targets" Pack="true" PackagePath="build/" />
     <None Include="../scripts/cleanup.py" Pack="true" PackagePath="tools/" />
+    <!-- Server installation, alongside tools/harness and tools/runner. -->
+    <None Include="../scripts/install-server.sh" Pack="true" PackagePath="tools/server/" />
+    <None Include="../scripts/install-server.ps1" Pack="true" PackagePath="tools/server/" />
     <None Include="README.md" Pack="true" PackagePath="/" />
     <None Include="../THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="/" />
     <None Include="$(PayloadDirectory)/manifest.json" Pack="true" PackagePath="/" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- LabAPI refuses a plugin whose Harmony differs from the deployed one: let NuGet
+         resolution enforce the exact version instead of leaving it a documented contract. -->
+    <PackageReference Include="Lib.Harmony" Version="[2.3.6]" />
   </ItemGroup>
   <Target Name="CheckPayload" BeforeTargets="Pack">
     <Error Condition="'$(PayloadDirectory)' == '' Or !Exists('$(PayloadDirectory)/manifest.json')"

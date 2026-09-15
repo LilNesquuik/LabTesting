@@ -21,7 +21,7 @@ internal static class Deployment
 
     internal static Layout Prepare(Options o, string work, string reports, CancellationToken token)
     {
-        var c = o.Suite;
+        SuiteConfig c = o.Suite;
         string install = Path.Combine(work, "server");
         string source = Path.GetFullPath(c.Server);
         if ((work + Path.DirectorySeparatorChar).StartsWith(source.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
@@ -57,7 +57,7 @@ internal static class Deployment
         File.WriteAllText(Path.Combine(config, "config_gameplay.txt"),
             "online_mode: false\nrestart_after_rounds: 0\nserver_tickrate: " + c.Tickrate +
             "\nserver_name: LabTesting\nidle_mode_enabled: false\nenable_fast_round_restart: true\n");
-        foreach (var setting in c.ServerSettings)
+        foreach (KeyValuePair<string, string> setting in c.ServerSettings)
         {
             if (!System.Text.RegularExpressions.Regex.IsMatch(setting.Key, "^[a-z_]+$") ||
                 setting.Value.IndexOfAny(['\r', '\n']) >= 0 ||
@@ -68,11 +68,11 @@ internal static class Deployment
         string plugins = Path.Combine(labapi, "plugins", c.Port.ToString());
         string dependencies = Path.Combine(labapi, "dependencies", c.Port.ToString());
         string tests = Path.Combine(work, "tests");
-        var targets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> targets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         targets.Add(Path.Combine(config, "labtesting-suite.xml"));
         targets.Add(Path.Combine(config, "config_sharing.txt"));
-        var identities = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var manifest = new List<object>();
+        HashSet<string> identities = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        List<object> manifest = new List<object>();
         string Deploy(string file, string target, bool assembly)
         {
             if (!File.Exists(file)) throw new FileNotFoundException("File to deploy not found.", file);
@@ -89,10 +89,10 @@ internal static class Deployment
             return target;
         }
         Deploy(c.Harness, Path.Combine(plugins, Path.GetFileName(c.Harness)), true);
-        foreach (var file in c.Plugins) Deploy(file, Path.Combine(plugins, Path.GetFileName(file)), true);
-        foreach (var file in c.Dependencies) Deploy(file, Path.Combine(dependencies, Path.GetFileName(file)), true);
-        var testPaths = c.Tests.Select(file => Deploy(file, Path.Combine(tests, Path.GetFileName(file)), true)).ToArray();
-        foreach (var file in c.Files)
+        foreach (string file in c.Plugins) Deploy(file, Path.Combine(plugins, Path.GetFileName(file)), true);
+        foreach (string file in c.Dependencies) Deploy(file, Path.Combine(dependencies, Path.GetFileName(file)), true);
+        string[] testPaths = c.Tests.Select(file => Deploy(file, Path.Combine(tests, Path.GetFileName(file)), true)).ToArray();
+        foreach (DeploymentFile file in c.Files)
         {
             string root = file.Root switch
             {
@@ -105,7 +105,7 @@ internal static class Deployment
                 throw new ArgumentException("Declare DLLs under tests, plugins or dependencies.");
             Deploy(file.Source, Under(root, file.Target), false);
         }
-        var request = new XElement("suite",
+        XElement request = new XElement("suite",
             new XAttribute("list", o.List), new XAttribute("frameworkTests", c.FrameworkTests),
             new XAttribute("reports", reports),
             new XElement("tests", testPaths.Select(p => new XElement("path", p))),
@@ -141,7 +141,7 @@ internal static class Deployment
             return;
         }
         // Keep the recovery marker until all other entries were removed successfully.
-        foreach (var entry in new DirectoryInfo(path).EnumerateFileSystemInfos().OrderBy(e => e.Name == ".labtesting-owned"))
+        foreach (FileSystemInfo entry in new DirectoryInfo(path).EnumerateFileSystemInfos().OrderBy(e => e.Name == ".labtesting-owned"))
         {
             if ((entry.Attributes & FileAttributes.Directory) != 0 && (entry.Attributes & FileAttributes.ReparsePoint) == 0)
                 DeleteOwned(entry.FullName);

@@ -43,7 +43,7 @@ public sealed class TestPlugin : Plugin
     public override string Author => "LabTesting";
 
     /// <inheritdoc/>
-    public override System.Version RequiredApiVersion => new System.Version(1, 1, 0);
+    public override System.Version RequiredApiVersion => new(1, 1, 0);
 
     /// <inheritdoc/>
     public override LoadPriority Priority => LoadPriority.Highest;

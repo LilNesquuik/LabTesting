@@ -11,22 +11,22 @@ internal static class Program
     {
         try
         {
-            if (args.SequenceEqual(new[] { "--selftest-sleeper" })) { await Task.Delay(60000); return 0; }
-            if (args.SequenceEqual(new[] { "--selftest-parent" }))
+            if (args.SequenceEqual(["--selftest-sleeper"])) { await Task.Delay(60000); return 0; }
+            if (args.SequenceEqual(["--selftest-parent"]))
             {
-                using var child = Process.Start(SelfTest.SelfStart("--selftest-sleeper"))!;
+                using Process child = Process.Start(SelfTest.SelfStart("--selftest-sleeper"))!;
                 Console.WriteLine(child.Id);
                 await Task.Delay(60000);
                 return 0;
             }
-            if (args.SequenceEqual(new[] { "--selftest" })) return SelfTest.Run();
-            var o = Options.Parse(args);
-            using var cancellation = new CancellationTokenSource();
+            if (args.SequenceEqual(["--selftest"])) return SelfTest.Run();
+            Options o = Options.Parse(args);
+            using CancellationTokenSource cancellation = new CancellationTokenSource();
             // Both handlers are unhooked before the using scope ends; ReSharper cannot see it.
             // ReSharper disable AccessToDisposedClosure
             ConsoleCancelEventHandler cancel = (_, e) => { e.Cancel = true; cancellation.Cancel(); };
             Console.CancelKeyPress += cancel;
-            using var term = OperatingSystem.IsWindows() ? null :
+            using PosixSignalRegistration? term = OperatingSystem.IsWindows() ? null :
                 PosixSignalRegistration.Create(PosixSignal.SIGTERM, c => { c.Cancel = true; cancellation.Cancel(); });
             // ReSharper restore AccessToDisposedClosure
             try { return await Run(o, cancellation.Token); }
@@ -37,7 +37,7 @@ internal static class Program
 
     internal static async Task<int> Run(Options o, CancellationToken cancellation)
     {
-        var c = o.Suite;
+        SuiteConfig c = o.Suite;
         string id = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N");
         string reports = Path.Combine(c.Reports, id);
         Directory.CreateDirectory(reports);
@@ -49,17 +49,17 @@ internal static class Program
         string? error = null;
         try
         {
-            using var portLock = new FileStream(Path.Combine(Path.GetTempPath(), "labtest-port-" + c.Port + ".lock"),
+            using FileStream portLock = new FileStream(Path.Combine(Path.GetTempPath(), "labtest-port-" + c.Port + ".lock"),
                 FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-            foreach (var type in new[] { SocketType.Dgram, SocketType.Stream })
+            foreach (SocketType type in new[] { SocketType.Dgram, SocketType.Stream })
             {
-                using var socket = new Socket(AddressFamily.InterNetworkV6, type,
+                using Socket socket = new Socket(AddressFamily.InterNetworkV6, type,
                     type == SocketType.Dgram ? ProtocolType.Udp : ProtocolType.Tcp);
                 socket.DualMode = true;
                 socket.ExclusiveAddressUse = true;
                 socket.Bind(new IPEndPoint(IPAddress.IPv6Any, c.Port));
             }
-            var layout = Deployment.Prepare(o, work, reports, cancellation);
+            Layout layout = Deployment.Prepare(o, work, reports, cancellation);
             exit = await Launch(layout.Executable, layout.Installation, layout.Config, reports, c, cancellation);
         }
         catch (Exception e) { error = e.ToString(); }
@@ -82,20 +82,21 @@ internal static class Program
             }
             else Console.WriteLine("[labtest] work kept: " + work);
         }
-        var path = Path.Combine(reports, "labtesting-results.jsonl");
-        var verdict = Verdict.Parse(File.Exists(path) ? File.ReadLines(path) : [], o.List);
+        string path = Path.Combine(reports, "labtesting-results.jsonl");
+        Verdict verdict = Verdict.Parse(File.Exists(path) ? File.ReadLines(path) : [], o.List);
         if (exit != 0) verdict.Problems.Add("Server exit code: " + exit + " (crash, timeout or cancellation).");
         if (error != null) verdict.Problems.Add(error);
         verdict.WriteReports(reports);
-        foreach (var line in verdict.Lines) Console.WriteLine(line);
-        foreach (var problem in verdict.Problems) Console.Error.WriteLine("[labtest] " + problem);
+        foreach (string line in verdict.Lines) Console.WriteLine("[labtest] " + line);
+        foreach (string problem in verdict.Problems) Console.Error.WriteLine("[labtest] " + problem);
+        Console.WriteLine("[labtest] " + verdict.Summary);
         return verdict.ExitCode(c.FailOnSkipped);
     }
 
     private static async Task<int> Launch(string exe, string cwd, string config, string reports,
         SuiteConfig c, CancellationToken cancellation)
     {
-        var psi = new ProcessStartInfo(exe) {
+        ProcessStartInfo psi = new ProcessStartInfo(exe) {
             WorkingDirectory = cwd, UseShellExecute = false,
             RedirectStandardOutput = true, RedirectStandardError = true
         };
@@ -105,18 +106,18 @@ internal static class Program
             psi.FileName = "/usr/bin/setsid";
             psi.ArgumentList.Add(exe);
         }
-        foreach (var arg in new[] { "-nographics", "-batchmode", "-stdout", "-disableconfigvalidation",
+        foreach (string arg in new[] { "-nographics", "-batchmode", "-stdout", "-disableconfigvalidation",
                      "-configpath", config, "-port" + c.Port, "-id" + Environment.ProcessId })
             psi.ArgumentList.Add(arg);
         string home = Path.Combine(cwd, "home");
         Directory.CreateDirectory(home);
-        foreach (var key in new[] { "HOME", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "XDG_CONFIG_HOME", "XDG_DATA_HOME" })
+        foreach (string key in new[] { "HOME", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "XDG_CONFIG_HOME", "XDG_DATA_HOME" })
             psi.Environment[key] = home;
         psi.Environment["LABTESTING_ENABLED"] = "1";
-        using var process = new Process { StartInfo = psi };
-        using var containment = new ProcessContainment();
-        using var stdout = new FileStream(Path.Combine(reports, "stdout.log"), FileMode.Create);
-        using var stderr = new FileStream(Path.Combine(reports, "stderr.log"), FileMode.Create);
+        using Process process = new Process { StartInfo = psi };
+        using ProcessContainment containment = new ProcessContainment();
+        using FileStream stdout = new FileStream(Path.Combine(reports, "stdout.log"), FileMode.Create);
+        using FileStream stderr = new FileStream(Path.Combine(reports, "stderr.log"), FileMode.Create);
         cancellation.ThrowIfCancellationRequested();
         process.Start();
         // Kill() is wired to ProcessExit and to cancellation, so it can fire after the using
@@ -131,8 +132,8 @@ internal static class Program
         // ReSharper restore AccessToDisposedClosure
         EventHandler onExit = (_, _) => Kill();
         AppDomain.CurrentDomain.ProcessExit += onExit;
-        using var registration = cancellation.Register(Kill);
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+        using CancellationTokenRegistration registration = cancellation.Register(Kill);
+        using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
         timeout.CancelAfter(TimeSpan.FromSeconds(c.TimeoutSeconds));
         Task output = process.StandardOutput.BaseStream.CopyToAsync(stdout);
         Task errors = process.StandardError.BaseStream.CopyToAsync(stderr);

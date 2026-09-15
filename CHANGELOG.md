@@ -4,7 +4,33 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.1] - 2026-09-15
+## [0.2.0] - 2026-09-15
+
+**Breaking.** Runner stdout lines now carry a `[labtest]` prefix, `LabTestingList`
+included: read `labtesting-results.jsonl` or `junit.xml` instead of parsing stdout.
+A consumer pinned below Harmony 2.3.6 no longer restores (NU1605); above 2.3.6 NuGet
+only warns (NU1608) and the mismatch still fails when LabAPI loads the plugin.
+
+### Added
+
+- The package declares Harmony as an exact NuGet dependency (`Lib.Harmony [2.3.6]`).
+  LabAPI refuses a plugin built against another version, so the mismatch now fails
+  the restore instead of surfacing as a load failure at run time.
+- `tools/server/install-server.sh` and `tools/server/install-server.ps1` ship in the
+  NuGet package, so a consumer no longer reimplements the SteamCMD warm-up and retry
+  loop in its own workflow.
+- Every runner line on stdout carries the `[labtest]` prefix, and the run ends on one
+  summary line — `N passed, N failed, N skipped, N errors` — that also counts the
+  infrastructure problems, so a run that produced nothing cannot read as a clean
+  `0 failed` in a noisy build log.
+- `--framework-directory` warns when the configuration also declares `harness`: the
+  NuGet targets supply it, and the JSON value was silently discarded.
+- `lib/net48/LabTesting.pdb` ships in the package with SourceLink data, so a stack
+  trace inside the harness resolves to file and line against the GitHub sources.
+- `.gitattributes`, so the shell scripts keep LF endings whatever a contributor's
+  Git is configured to do.
+- `.editorconfig` and a Dependabot configuration for the GitHub Actions versions.
+- `ContinuousIntegrationBuild` in CI, towards reproducible assemblies.
 
 ### Changed
 
@@ -19,15 +45,6 @@ All notable changes to this project are documented here. The format follows
 - The net48 assemblies are built on `windows-latest` in CI and the resulting DLLs
   are executed on both systems. The harness cannot compile on Linux; see the known
   limits in `docs/validation.md`. Consuming plugins are unaffected.
-
-### Added
-
-- `lib/net48/LabTesting.pdb` ships in the package with SourceLink data, so a stack
-  trace inside the harness resolves to file and line against the GitHub sources.
-- `.gitattributes`, so the shell scripts keep LF endings whatever a contributor's
-  Git is configured to do.
-- `.editorconfig` and a Dependabot configuration for the GitHub Actions versions.
-- `ContinuousIntegrationBuild` in CI, towards reproducible assemblies.
 
 ### Fixed
 
@@ -57,5 +74,5 @@ First published release.
 - JSONL, JUnit and Markdown reports, kept even after a crash or a timeout.
 - MIT license, declared in the package metadata.
 
-[0.1.1]: https://github.com/LilNesquuik/LabTesting/releases/tag/v0.1.1
+[0.2.0]: https://github.com/LilNesquuik/LabTesting/releases/tag/v0.2.0
 [0.1.0]: https://github.com/LilNesquuik/LabTesting/releases/tag/v0.1.0

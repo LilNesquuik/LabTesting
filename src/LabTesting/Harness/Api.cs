@@ -224,7 +224,7 @@ public static class TickExtensions
     /// <summary>
     /// Returns a duration of <paramref name="n"/> server ticks.
     /// </summary>
-    public static Ticks Ticks(this int n) => new Ticks(n);
+    public static Ticks Ticks(this int n) => new(n);
 
     /// <summary>
     /// Converts seconds to ticks using the current tickrate.

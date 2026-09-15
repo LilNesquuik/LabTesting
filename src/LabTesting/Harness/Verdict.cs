@@ -84,7 +84,7 @@ public sealed class Verdict : IDisposable
     /// <summary>Writes the complete expected plan before any test runs.</summary>
     public void WritePlan(IReadOnlyList<TestCase> plan, bool listOnly)
     {
-        var sb = new StringBuilder("{");
+        StringBuilder sb = new StringBuilder("{");
         Field(sb, "kind", "plan").Append(',');
         Bool(sb, "list", listOnly).Append(',');
         Field(sb, "frameworkVersion", typeof(Verdict).Assembly.FullName).Append(',');
@@ -95,7 +95,7 @@ public sealed class Verdict : IDisposable
         for (int i = 0; i < plan.Count; i++)
         {
             if (i > 0) sb.Append(',');
-            var t = plan[i];
+            TestCase t = plan[i];
             sb.Append('{');
             Field(sb, "id", t.Id).Append(',');
             Field(sb, "collection", t.Collection).Append(',');
@@ -134,7 +134,7 @@ public sealed class Verdict : IDisposable
             default: Errors++; break;
         }
 
-        var sb = new StringBuilder(256);
+        StringBuilder sb = new StringBuilder(256);
         sb.Append('{');
         Field(sb, "id", test.Id).Append(',');
         Field(sb, "collection", test.Collection).Append(',');
@@ -192,7 +192,7 @@ public sealed class Verdict : IDisposable
     /// </remarks>
     public void WriteSummary(string? harnessError = null)
     {
-        var sb = new StringBuilder(160);
+        StringBuilder sb = new StringBuilder(160);
         sb.Append('{');
         Field(sb, "kind", "summary").Append(',');
         Number(sb, "passed", Passed).Append(',');
@@ -230,7 +230,7 @@ public sealed class Verdict : IDisposable
         if (value == null)
             return "null";
 
-        var sb = new StringBuilder(value.Length + 2);
+        StringBuilder sb = new StringBuilder(value.Length + 2);
         sb.Append('"');
         foreach (char c in value)
         {

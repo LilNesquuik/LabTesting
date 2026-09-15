@@ -48,17 +48,17 @@ internal sealed record Options(SuiteConfig Suite, bool List)
         string? config = null;
         for (int i = 1; i < args.Length; i++)
             if (args[i] == "--config") config = Path.GetFullPath(args[++i]);
-        var c = config == null ? new SuiteConfig() :
+        SuiteConfig c = config == null ? new SuiteConfig() :
             JsonSerializer.Deserialize<SuiteConfig>(File.ReadAllText(config), Json)
             ?? throw new ArgumentException("Empty configuration.");
         string root = config == null ? Environment.CurrentDirectory : Path.GetDirectoryName(config)!;
         string Resolve(string p) => Path.GetFullPath(p, root);
         c.Server = c.Server.Length == 0 ? "" : Resolve(c.Server);
         c.Harness = c.Harness.Length == 0 ? "" : Resolve(c.Harness);
-        c.Tests = c.Tests.Select(Resolve).ToArray();
-        c.Plugins = c.Plugins.Select(Resolve).ToArray();
-        c.Dependencies = c.Dependencies.Select(Resolve).ToArray();
-        foreach (var f in c.Files) f.Source = Resolve(f.Source);
+        c.Tests = [.. c.Tests.Select(Resolve)];
+        c.Plugins = [.. c.Plugins.Select(Resolve)];
+        c.Dependencies = [.. c.Dependencies.Select(Resolve)];
+        foreach (DeploymentFile f in c.Files) f.Source = Resolve(f.Source);
         c.Reports = Resolve(c.Reports);
         if (c.Work != null) c.Work = Resolve(c.Work);
         for (int i = 1; i < args.Length; i++)
@@ -72,6 +72,8 @@ internal sealed record Options(SuiteConfig Suite, bool List)
                 case "--plugin": c.Harness = Path.GetFullPath(Value()); break;
                 case "--framework-directory":
                     string framework = Path.GetFullPath(Value());
+                    if (c.Harness.Length > 0)
+                        Console.Error.WriteLine("[labtest] harness is ignored: the NuGet targets supply it. Remove it from the configuration.");
                     c.Harness = Path.Combine(framework, "LabTesting.dll");
                     string harmony = Path.Combine(framework, "0Harmony.dll");
                     if (!c.Dependencies.Contains(harmony, StringComparer.OrdinalIgnoreCase))

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using LabApi.Features.Console;
 
@@ -28,14 +29,14 @@ public static class Runner
     public static async Task RunAll(string verdictPath)
     {
         Running = true;
-        using (var verdict = new Verdict(verdictPath))
+        using (Verdict verdict = new Verdict(verdictPath))
         {
             string? harnessError = null;
             try
             {
                 // Yield until the synchronous LabAPI plugin loading cycle has completed.
                 await Expect.Frame();
-                var request = new SuiteRequest();
+                SuiteRequest request = new SuiteRequest();
                 request.CheckPlugins();
                 List<TestCase> plan = request.Plan();
                 verdict.WritePlan(plan, request.List);
@@ -52,7 +53,7 @@ public static class Runner
                 }
 
                 Dirty escalation = Dirty.Dummies;
-                foreach (TestCase test in request.List ? new List<TestCase>() : plan)
+                foreach (TestCase test in request.List ? [] : plan)
                 {
                     escalation = await RunOne(test, verdict, escalation);
                 }
@@ -88,7 +89,7 @@ public static class Runner
     /// </summary>
     private static async Task<Dirty> RunOne(TestCase test, Verdict verdict, Dirty escalation)
     {
-        var elapsed = System.Diagnostics.Stopwatch.StartNew();
+        Stopwatch elapsed = System.Diagnostics.Stopwatch.StartNew();
         Dirty isolation = test.Isolation;
         bool escalated = false;
         if (escalation > isolation)
@@ -97,7 +98,7 @@ public static class Runner
             escalated = true;
         }
 
-        var context = new TestContext(test.Id, test.Collection, isolation, test.Perf)
+        TestContext context = new TestContext(test.Id, test.Collection, isolation, test.Perf)
         {
             StartTick = Pump.Tick
         };

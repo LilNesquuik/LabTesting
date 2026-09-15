@@ -47,7 +47,7 @@ public readonly struct StateFingerprint
     /// Takes a snapshot of the current server state.
     /// </summary>
     public static StateFingerprint Take() =>
-        new StateFingerprint(ReferenceHub.AllHubs.Count, NetworkServer.spawned.Count, RoundRestart.UptimeRounds);
+        new(ReferenceHub.AllHubs.Count, NetworkServer.spawned.Count, RoundRestart.UptimeRounds);
 
     /// <summary>
     /// Returns whether this snapshot shows state the baseline did not have.
@@ -98,7 +98,7 @@ public static class World
         }
 
         hub.nicknameSync.MyNick = nick;
-        var connection = new RecordingDummyConnection();
+        RecordingDummyConnection connection = new RecordingDummyConnection();
         NetworkServer.AddPlayerForConnection(connection, go);
 
         // Unity overloads ==: a destroyed hub compares equal to null while the reference is not.
@@ -106,7 +106,7 @@ public static class World
         await Expect.Eventually(() => hub != null && hub.IsDummy, 120.Ticks(),
             "the dummy must reach ClientInstanceMode.Dummy");
 
-        var player = new TestPlayer(hub, connection);
+        TestPlayer player = new TestPlayer(hub, connection);
         Spawned.Add(player);
 
         if (role != RoleTypeId.None)
@@ -130,13 +130,13 @@ public static class World
     /// </summary>
     public static async Task<IReadOnlyList<TestPlayer>> SpawnMany(int n, RoleTypeId role)
     {
-        var players = new List<TestPlayer>(n);
+        List<TestPlayer> players = new List<TestPlayer>(n);
         for (int i = 0; i < n; i++)
             players.Add(await Spawn(role, "Dummy" + i));
         return players;
     }
 
-    internal static List<TestPlayer> Spawned { get; } = new List<TestPlayer>();
+    internal static List<TestPlayer> Spawned { get; } = [];
 
     /// <summary>
     /// Gets the number of rounds the server has completed since it started.
@@ -288,7 +288,7 @@ public readonly struct CapturedMsg
         {
             if (Bytes.Length < NetworkMessages.IdSize)
                 return 0;
-            var reader = new NetworkReader(new ArraySegment<byte>(Bytes));
+            NetworkReader reader = new NetworkReader(new ArraySegment<byte>(Bytes));
             return NetworkMessages.UnpackId(reader, out ushort id) ? id : (ushort)0;
         }
     }
@@ -359,7 +359,7 @@ public interface INetProbe
 /// </remarks>
 public sealed class RecordingDummyConnection : DummyNetworkConnection, INetProbe
 {
-    private readonly List<CapturedMsg> _sent = new List<CapturedMsg>();
+    private readonly List<CapturedMsg> _sent = [];
 
     /// <inheritdoc/>
     public int SentCount => _sent.Count;
@@ -373,7 +373,7 @@ public sealed class RecordingDummyConnection : DummyNetworkConnection, INetProbe
         if (segment.Array == null || segment.Count == 0)
             return;
 
-        var bytes = new byte[segment.Count];
+        byte[] bytes = new byte[segment.Count];
         Buffer.BlockCopy(segment.Array, segment.Offset, bytes, 0, segment.Count);
         _sent.Add(new CapturedMsg(bytes, channelId, Pump.Tick));
     }

@@ -22,8 +22,10 @@ same payload on both systems before publishing.
 file by file by `scripts/verify-nuget.ps1`, SHA-256 written next to it. Payload:
 the net48 harness under `lib/net48` and `tools/harness`, `LabTesting.pdb` with
 SourceLink data, Harmony 2.3.6, the framework-dependent .NET 10 `labtest.dll`
-runner, the MSBuild targets, `cleanup.py`, `manifest.json` and the third-party
-notices. No game, Unity or LabAPI assembly.
+runner, the MSBuild targets, `cleanup.py`, the `tools/server` SteamCMD install
+scripts, `manifest.json` and the third-party notices. No game, Unity or LabAPI
+assembly. Harmony 2.3.6 is also declared as an exact NuGet dependency, so a
+consumer pinned to another version fails the restore rather than the run.
 
 Real consumer validation on both systems through
 `scripts/test-nuget-consumer.ps1`, with a clean NuGet cache on every run and no

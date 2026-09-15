@@ -185,7 +185,7 @@ internal sealed class DummyInput : IDummyInput
         get
         {
             List<DummyAction> actions = DummyActionCollector.ServerGetActions(_hub);
-            var names = new string[actions.Count];
+            string[] names = new string[actions.Count];
             for (int i = 0; i < actions.Count; i++)
                 names[i] = actions[i].Name;
             return names;

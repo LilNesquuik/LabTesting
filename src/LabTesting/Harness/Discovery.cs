@@ -109,7 +109,7 @@ public static class Discovery
     /// </remarks>
     public static List<TestCase> BuildPlan(IEnumerable<Assembly>? selected = null)
     {
-        var cases = new List<TestCase>();
+        List<TestCase> cases = new List<TestCase>();
 
         Assembly self = typeof(FactAttribute).Assembly;
         string selfName = self.GetName().Name;
@@ -189,7 +189,7 @@ public static class Discovery
 
         if (isTheory)
         {
-            var rows = (InlineDataAttribute[])method.GetCustomAttributes(typeof(InlineDataAttribute), false);
+            InlineDataAttribute[] rows = (InlineDataAttribute[])method.GetCustomAttributes(typeof(InlineDataAttribute), false);
             if (rows.Length == 0)
             {
                 cases.Add(Invalid(type, method, baseId, "[Theory] without [InlineData]."));
@@ -208,7 +208,7 @@ public static class Discovery
             return;
         }
 
-        cases.Add(Validate(new TestCase(type, method, Array.Empty<object?>(), baseId)));
+        cases.Add(Validate(new TestCase(type, method, [], baseId)));
     }
 
     /// <summary>
@@ -232,7 +232,7 @@ public static class Discovery
 
     private static TestCase Invalid(Type type, MethodInfo method, string id, string reason)
     {
-        var test = new TestCase(type, method, Array.Empty<object?>(), id);
+        TestCase test = new TestCase(type, method, [], id);
         test.Skip = reason;
         return test;
     }

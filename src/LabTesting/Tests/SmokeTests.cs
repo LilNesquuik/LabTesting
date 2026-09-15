@@ -95,7 +95,7 @@ public sealed class WorldTests
     [Fact, Isolation(Dirty.Dummies)]
     public async Task Two_dummies_have_distinct_connections()
     {
-        var pair = await World.SpawnPair(RoleTypeId.ClassD, RoleTypeId.Scientist);
+        Tuple<TestPlayer, TestPlayer> pair = await World.SpawnPair(RoleTypeId.ClassD, RoleTypeId.Scientist);
 
         Assert.True(!ReferenceEquals(pair.Item1.Net, pair.Item2.Net), "one probe per dummy");
         Assert.True(pair.Item1.Hub != pair.Item2.Hub, "two distinct hubs");

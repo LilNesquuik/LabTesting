@@ -110,8 +110,8 @@ public sealed class AssertionAbort : Exception
 /// </remarks>
 public sealed class TestContext
 {
-    private readonly List<Failure> _failures = new List<Failure>();
-    private readonly List<SwallowedError> _swallowed = new List<SwallowedError>();
+    private readonly List<Failure> _failures = [];
+    private readonly List<SwallowedError> _swallowed = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TestContext"/> class.
@@ -230,7 +230,7 @@ public static class Swallowed
     /// Gets the exceptions captured since the current test started. Empty between tests.
     /// </summary>
     public static IReadOnlyList<SwallowedError> DuringCurrentTest =>
-        TestContext.Current?.Swallowed ?? Array.Empty<SwallowedError>();
+        TestContext.Current?.Swallowed ?? [];
 
     /// <summary>
     /// Fails the test if LabAPI swallowed any exception while it was running.

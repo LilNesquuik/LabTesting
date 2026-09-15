@@ -24,7 +24,7 @@ Replace:
 | Input | Value |
 |---|---|
 | release-repository | owner/repository publishing LabTesting |
-| release-version | exact version without v, for example 0.1.1 |
+| release-version | exact version without v, for example 0.2.0 |
 | archive-sha256 | SHA-256 of that version's Linux archive |
 | config | path to the JSON, defaults to examples/labtesting.json |
 | artifact-name | unique prefix per parallel call, defaults to labtesting |
