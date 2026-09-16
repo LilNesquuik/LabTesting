@@ -16,7 +16,7 @@ jobs:
       SL_REFERENCES: ${{ github.workspace }}/.server/SCPSL_Data/Managed
       EXILED_REFERENCES: ${{ github.workspace }}/.server/SCPSL_Data/Managed
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
@@ -50,7 +50,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
