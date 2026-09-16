@@ -4,7 +4,7 @@
 
 Install the .NET 10 SDK to build and to run the runner. The server uses its own
 Mono for the net48 harness. The NuGet package ships a portable runner that relies
-on that SDK; the standalone archives carry their own runtime.
+on that SDK.
 
 **Windows**: install "SCP Secret Laboratory Dedicated Server" through Steam, or
 extract SteamCMD and run:
@@ -25,11 +25,10 @@ sudo apt-get install -y lib32gcc-s1 lib32stdc++6 libatomic1 libgomp1 libglu1-mes
 bash scripts/install-server.sh "$PWD/.server" "$HOME/steamcmd-labtesting"
 ```
 
-`install-server.sh` lives in the repository and in the standalone archives
-(`.labtesting/tools/`). After extracting an archive, also run
-`chmod +x .labtesting/runner/labtest`; the NuGet package's runner does not need it.
-A freshly downloaded SteamCMD updates itself on its first run and can fail
-`app_update` with "Missing configuration"; the script warms it up and retries.
+`install-server.sh` lives in the repository and ships inside the NuGet package
+(`tools/server/`). A freshly downloaded SteamCMD updates itself on its first run
+and can fail `app_update` with "Missing configuration"; the script warms it up
+and retries.
 
 Anonymous SteamCMD downloads use application **996560**. The server and its
 isolated copy take several GB each: plan the space for every parallel worker. See
@@ -44,11 +43,14 @@ the current prerequisites for the
 3. Add the package to the net48 test project, with a **pinned published version**:
 
    ```xml
-   <PackageReference Include="LabTesting" Version="0.2.0" PrivateAssets="all" />
+   <PackageReference Include="LabTesting" Version="0.3.0" PrivateAssets="all" />
    ```
 
-4. Install the server into `.server/`, or pass its path through
-   `-p:LabTestingServer=`.
+4. Nothing to configure if the dedicated server is already installed through
+   Steam: the runner auto-detects it (app 996560, default install location).
+   Otherwise install it into `.server/`, or pass its path through
+   `-p:LabTestingServer=`. CI has no Steam install, so it always installs its
+   own copy and passes that path explicitly (see [github-actions.md](github-actions.md)).
 5. Build and run:
 
    ```bash
@@ -66,25 +68,9 @@ of the package: csproj, `labtesting.json` and tests shared with
 `SamplePlugin.Tests`. The available properties are listed in
 [packaging/README.md](../packaging/README.md).
 
-### Without NuGet: the standalone archive
-
-Download a **published, pinned release**, check its archive against `SHA256SUMS`,
-then extract it into `.labtesting/` at the root. Do not use a `latest` link. The
-harness is then handed to the build by hand and the runner is invoked directly:
-
-```bash
-dotnet build examples/SamplePlugin.Tests -c Release -p:LabTestingPath="$PWD/.labtesting/harness/LabTesting.dll"
-.labtesting/runner/labtest list --config examples/labtesting.json
-.labtesting/runner/labtest run --config examples/labtesting.json --fail-on-skipped
-```
-
 `SamplePlugin.Tests` is a net48 library, not a `dotnet test` project. It
 references LabTesting and the plugin. The attributes come from `LabTesting`, not
 from xUnit. Adapt names, paths and assertions to your plugin.
-
-To work from source without a release: build `src/LabTesting`, then point
-`harness` and the Harmony dependency at `src/LabTesting/bin/Release/net48`. The
-test project uses that path by default when `LabTestingPath` is absent.
 
 ## 3. Writing tests
 
@@ -196,6 +182,7 @@ an external absolute path stays the plugin's own responsibility.
 | Server stuck | Read stdout.log and stderr.log, check the native install and use --keep to inspect the copy. A timeout produces a failure with the reports kept. |
 | Missing verdict | The harness could not arm: look for a load error, a dependency, the LabAPI version or a refused sentinel. |
 | Summary present but the workflow is red | Check the server exit code, missing results, duplicates, teardown errors and fail-on-skipped. A summary alone does not authorize success. |
-| Permission denied on Linux | chmod +x on the extracted runner; check the rights on the source server's executable. The runner preserves Unix modes when copying. |
+| Permission denied on Linux | Check the rights on the source server's executable. The runner preserves Unix modes when copying. |
 | Cleanup refused on Windows | A process or an antivirus holds a file open. The reports name the directory kept; check the processes before deleting only that labtest copy. |
 | The plugin still reads a personal file | Check that it uses the standard LabAPI paths. Absolute paths hardcoded in the plugin cannot be redirected automatically. |
+| CS7069, or CS0122 on a Harmony-internal type, only in Linux CI | A private dependency was built against the game's assemblies and forces a `HintPath` to its `mscorlib`/`netstandard`/`System`. The Linux SDK's own targeting-pack `mscorlib` wins over that `HintPath`. Build that job on `windows-latest` instead; see [github-actions.md](github-actions.md). |

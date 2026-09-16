@@ -2,7 +2,7 @@
   <PropertyGroup>
     <!-- Single source of truth for the version. pack-nuget.ps1 and the release workflows
          override it with -p:Version when they build a specific release. -->
-    <VersionPrefix>0.2.0</VersionPrefix>
+    <VersionPrefix>0.3.0</VersionPrefix>
     <RepositoryUrl Condition="'$(RepositoryUrl)' == ''">https://github.com/LilNesquuik/LabTesting</RepositoryUrl>
     <!-- Deterministic paths in CI so a published assembly can be reproduced from its tag. -->
     <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>

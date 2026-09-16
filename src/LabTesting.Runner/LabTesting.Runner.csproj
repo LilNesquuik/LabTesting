@@ -10,4 +10,12 @@
         <RootNamespace>LabTesting.Runner</RootNamespace>
     </PropertyGroup>
 
+    <ItemGroup>
+        <PackageReference Include="CommandLineParser" Version="2.9.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="../../templates/github/nuget-tests.yml" LogicalName="nuget-tests.yml" />
+    </ItemGroup>
+
 </Project>

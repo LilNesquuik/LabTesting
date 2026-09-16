@@ -20,6 +20,7 @@ internal static class Program
                 return 0;
             }
             if (args.SequenceEqual(["--selftest"])) return SelfTest.Run();
+            if (args.Length > 0 && args[0] == "init") return Init.Run(args[1..]);
             Options o = Options.Parse(args);
             using CancellationTokenSource cancellation = new CancellationTokenSource();
             // Both handlers are unhooked before the using scope ends; ReSharper cannot see it.

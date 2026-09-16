@@ -3,6 +3,10 @@
 LabTesting distributions include Harmony 2.3.6 (MIT), Copyright (c) 2017 Andreas Pardeike.
 Source: https://github.com/pardeike/Harmony/tree/v2.3.6.0
 
+The runner also includes CommandLineParser 2.9.1 (MIT),
+Copyright (c) 2005 - 2015 Giacomo Stelluti Scala & Contributors.
+Source: https://github.com/commandlineparser/commandline
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -21,8 +25,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-Self-contained runners also include the Microsoft .NET runtime and its
-THIRD-PARTY-NOTICES.TXT and LICENSE.txt in the runner directory.
+Both notices above share this MIT license text.
+
 SCP:SL, Unity, LabAPI and publicized game assemblies are not distributed here.
 Install the dedicated server through SteamCMD (996560) and build against its
 matching assemblies.

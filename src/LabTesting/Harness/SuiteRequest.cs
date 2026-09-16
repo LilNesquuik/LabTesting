@@ -34,12 +34,18 @@ internal sealed class SuiteRequest
         List<TestCase> plan = Discovery.BuildPlan(assemblies);
         string[] collections = Values("collections");
         string[] tests = Values("testNames");
+        string[] traits = Values("traits");
+        string[] excludeTraits = Values("excludeTraits");
         foreach (string name in collections)
             if (!plan.Any(t => t.Collection == name)) throw new InvalidOperationException("Missing collection: " + name);
         if (collections.Length > 0) plan.RemoveAll(t => !collections.Contains(t.Collection));
         foreach (string name in tests)
             if (!plan.Any(t => t.Id == name)) throw new InvalidOperationException("Missing test: " + name);
         if (tests.Length > 0) plan.RemoveAll(t => !tests.Contains(t.Id));
+        foreach (string trait in traits)
+            if (!plan.Any(t => HasTrait(t, trait))) throw new InvalidOperationException("Missing trait: " + trait);
+        if (traits.Length > 0) plan.RemoveAll(t => !traits.Any(trait => HasTrait(t, trait)));
+        if (excludeTraits.Length > 0) plan.RemoveAll(t => excludeTraits.Any(trait => HasTrait(t, trait)));
         if (plan.Count == 0) throw new InvalidOperationException("No test in the requested suite.");
         foreach (Assembly assembly in assemblies.Where(a => a != typeof(FactAttribute).Assembly))
             if (!plan.Any(t => t.Fixture.Assembly == assembly))
@@ -47,6 +53,14 @@ internal sealed class SuiteRequest
         if (plan.GroupBy(t => t.Id).Any(g => g.Count() != 1))
             throw new InvalidOperationException("Duplicate test identifiers.");
         return plan;
+    }
+
+    private static bool HasTrait(TestCase test, string filter)
+    {
+        int split = filter.IndexOf('=');
+        if (split < 0) throw new InvalidOperationException("Invalid trait filter, expected name=value: " + filter);
+        string name = filter[..split], value = filter[(split + 1)..];
+        return test.Traits.Any(t => t.Name == name && t.Value == value);
     }
 
     internal void CheckPlugins()

@@ -132,6 +132,36 @@ public sealed class PerfAttribute : Attribute
 }
 
 /// <summary>
+/// Tags a test, or every test in a class, with a free-form name/value pair. Filterable with
+/// <c>--trait</c> and <c>--exclude-trait</c>. A class-level trait is inherited by its subclasses,
+/// like every other attribute whose usage does not opt out of inheritance.
+/// </summary>
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = true)]
+public sealed class TraitAttribute : Attribute
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TraitAttribute"/> class.
+    /// </summary>
+    /// <param name="name">Tag name, matched exactly by the filters.</param>
+    /// <param name="value">Tag value, matched exactly by the filters.</param>
+    public TraitAttribute(string name, string value)
+    {
+        Name = name;
+        Value = value;
+    }
+
+    /// <summary>
+    /// Gets the tag name.
+    /// </summary>
+    public string Name { get; }
+
+    /// <summary>
+    /// Gets the tag value.
+    /// </summary>
+    public string Value { get; }
+}
+
+/// <summary>
 /// Groups a test class into a named collection. The collection name appears in the verdict and
 /// keeps related tests scheduled together.
 /// </summary>

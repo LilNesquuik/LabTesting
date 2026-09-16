@@ -5,6 +5,7 @@ try {
     $expected = @('lib/net48/LabTesting.dll', 'lib/net48/LabTesting.pdb',
         'tools/harness/LabTesting.dll', 'tools/harness/0Harmony.dll',
         'tools/runner/labtest.dll', 'tools/runner/labtest.deps.json', 'tools/runner/labtest.runtimeconfig.json',
+        'tools/runner/CommandLine.dll',
         'build/LabTesting.props', 'build/LabTesting.targets', 'tools/cleanup.py',
         'tools/server/install-server.sh', 'tools/server/install-server.ps1',
         'README.md', 'THIRD-PARTY-NOTICES.md', 'manifest.json')
@@ -25,7 +26,7 @@ try {
         throw 'Unexpected NuGet identity or version.'
     }
     $manifest = Read-Entry 'manifest.json' | ConvertFrom-Json
-    if ($manifest.version -cne $Version -or $manifest.files.Count -ne 14) { throw 'Invalid manifest.' }
+    if ($manifest.version -cne $Version -or $manifest.files.Count -ne 15) { throw 'Invalid manifest.' }
     if (@($manifest.files | Group-Object path | Where-Object Count -GT 1).Count) { throw 'Duplicate manifest entry.' }
     foreach ($entry in $manifest.files) {
         if ($entry.path -cnotin $expected) { throw "Invalid manifest entry: $($entry.path)" }

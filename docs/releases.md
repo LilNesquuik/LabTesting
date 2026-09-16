@@ -2,11 +2,11 @@
 
 ## NuGet package
 
-This is the recommended way to install: a single `PackageReference` brings the
-net48 harness, Harmony, the portable .NET 10 runner and the MSBuild targets.
+This is the way to install: a single `PackageReference` brings the net48 harness,
+Harmony, the portable .NET 10 runner and the MSBuild targets.
 
 ```powershell
-pwsh -File scripts/pack-nuget.ps1 -Version 0.2.0 -Managed C:/scpsl/SCPSL_Data/Managed
+pwsh -File scripts/pack-nuget.ps1 -Version 0.3.0 -Managed C:/scpsl/SCPSL_Data/Managed
 ```
 
 The script builds the harness, publishes the runner framework-dependent, runs
@@ -40,39 +40,9 @@ matching policy on nuget.org targets the `LilNesquuik/LabTesting` repository, th
 `nuget-release.yml` file, no environment, the Push scope and the `LabTesting`
 pattern. The push to GitHub Packages keeps using the job's `GITHUB_TOKEN`.
 
-## Standalone archives
-
-```powershell
-pwsh -File scripts/package.ps1 -Version 0.2.0 -Managed C:/scpsl/SCPSL_Data/Managed
-```
-
-The script needs NuGet network access to restore the self-contained .NET runtimes.
-It refuses to overwrite an existing distribution directory; pick a new `-Output`
-for another attempt.
-
-Output: `LabTesting-<version>-linux-x64.zip`,
-`LabTesting-<version>-win-x64.zip` and `SHA256SUMS`.
-
-Each archive holds:
-
-- `harness/LabTesting.dll` and `harness/0Harmony.dll`.
-- `runner/`: the platform's executable and its self-contained .NET runtime.
-- `tools/`: server install, verification and cleanup recovery.
-- `manifest.json`: version, target, dependencies, SHA-256 of every payload file.
-- Third-party notices.
-
-The manifest excludes its own hash; `SHA256SUMS` covers the complete archives.
-`pwsh -File scripts/verify-release.ps1 -Directory .labtesting` checks the files
-after extraction. On Linux, run `chmod +x .labtesting/runner/labtest` once the ZIP
-is extracted.
-
-**No SCP:SL, LabAPI, Unity or publicized game assembly is embedded.** Packaging
-uses an allow-list for the harness, never a glob over its bin directory. Game
-references come from the installed server.
-
-The release workflow builds the net48 assemblies on `windows-latest` — see the
-known limits — uploads the artifacts, then creates a **draft** release for a
-`v<version>` tag. Publishing that draft triggers `nuget-release.yml`.
+`release.yml` runs the real-server validation on a `v<version>` tag push, then
+creates a **draft** release for that tag with no attached assets; publishing that
+draft triggers `nuget-release.yml`, which does the actual packaging.
 
 ## Compatibility matrix
 

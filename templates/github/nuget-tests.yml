@@ -1,7 +1,7 @@
 # Copy as .github/workflows/tests.yml. Adapt TEST_PROJECT.
 # LabTesting's version lives only in the test project's PackageReference.
 name: Plugin tests
-on: [push, pull_request, workflow_dispatch]
+on: [pull_request, workflow_dispatch]
 permissions:
   contents: read
 jobs:
@@ -40,6 +40,9 @@ jobs:
           done
           test -f "$SL_REFERENCES/Assembly-CSharp.dll"
       # Add dependency fetch/build steps here when the tested plugin needs them.
+      # If a dependency was built against the game's assemblies (a HintPath to its
+      # mscorlib/netstandard/System), this job needs windows-latest instead — see
+      # docs/github-actions.md.
       - name: Restore, build and test
         timeout-minutes: 12
         run: |

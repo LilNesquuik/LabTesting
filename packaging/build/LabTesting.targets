@@ -34,6 +34,10 @@
     <Exec WorkingDirectory="$(MSBuildProjectDirectory)"
           Command="&quot;$(LabTestingDotNetHost)&quot; &quot;$(LabTestingRunnerPath)&quot; --selftest" />
   </Target>
+  <Target Name="LabTestingInit" DependsOnTargets="_LabTestingValidatePackage">
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)"
+          Command="&quot;$(LabTestingDotNetHost)&quot; &quot;$(LabTestingRunnerPath)&quot; init --test-project &quot;$(MSBuildProjectFullPath)&quot;" />
+  </Target>
   <Target Name="LabTestingCleanup" DependsOnTargets="_LabTestingValidatePackage">
     <PropertyGroup>
       <LabTestingPython Condition="'$(LabTestingPython)' == ''">python3</LabTestingPython>

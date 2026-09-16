@@ -4,6 +4,34 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-09-16
+
+**Breaking.** The standalone archive distribution is removed: NuGet is now the
+only supported way to install LabTesting. `scripts/package.ps1`,
+`scripts/verify-release.ps1`, `labtesting-reusable.yml` and
+`templates/github/labtesting.yml` are gone; `release.yml` no longer builds or
+attaches `.zip` archives, it only validates and drafts the tag's release.
+`templates/github/private-dependencies.yml` is rewritten as a NuGet-based
+template (it used to call the now-removed reusable workflow).
+
+### Added
+
+- `labtest init` (`-t:LabTestingInit` through MSBuild) scaffolds `labtesting.json`
+  and `.github/workflows/tests.yml` at the repository root from the test
+  project's own `ProjectReference` entries, whatever the folder layout. Refuses
+  to overwrite either file.
+- `labtest run`/`list` auto-discover `labtesting.json` when `--config` is
+  omitted, walking up from the current directory the same way the MSBuild
+  targets already did — a bare `labtest run --collection X` now works from
+  anywhere inside the project.
+- `[Trait("name", "value")]` tags a test or a whole class; `--trait` and
+  `--exclude-trait` filter by tag, `name=value`, same rules as the other
+  filters (each value must match something, `--exclude-trait` is silent
+  otherwise).
+- The runner auto-detects a local Steam install of the dedicated server
+  (app 996560) when `--server`/`LabTestingServer` is not given.
+- `CommandLineParser` replaces the runner's hand-rolled argument parsing.
+
 ## [0.2.0] - 2026-09-15
 
 **Breaking.** Runner stdout lines now carry a `[labtest]` prefix, `LabTestingList`
@@ -74,5 +102,6 @@ First published release.
 - JSONL, JUnit and Markdown reports, kept even after a crash or a timeout.
 - MIT license, declared in the package metadata.
 
+[0.3.0]: https://github.com/LilNesquuik/LabTesting/releases/tag/v0.3.0
 [0.2.0]: https://github.com/LilNesquuik/LabTesting/releases/tag/v0.2.0
 [0.1.0]: https://github.com/LilNesquuik/LabTesting/releases/tag/v0.1.0

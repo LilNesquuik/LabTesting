@@ -37,6 +37,7 @@ $files = @(
     @{ path = 'tools/runner/labtest.dll'; source = "$stage/runner/labtest.dll" }
     @{ path = 'tools/runner/labtest.deps.json'; source = "$stage/runner/labtest.deps.json" }
     @{ path = 'tools/runner/labtest.runtimeconfig.json'; source = "$stage/runner/labtest.runtimeconfig.json" }
+    @{ path = 'tools/runner/CommandLine.dll'; source = "$stage/runner/CommandLine.dll" }
     @{ path = 'build/LabTesting.props'; source = "$repository/packaging/build/LabTesting.props" }
     @{ path = 'build/LabTesting.targets'; source = "$repository/packaging/build/LabTesting.targets" }
     @{ path = 'tools/cleanup.py'; source = "$repository/scripts/cleanup.py" }

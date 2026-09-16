@@ -27,6 +27,7 @@
     <None Include="$(PayloadDirectory)/runner/labtest.dll" Pack="true" PackagePath="tools/runner/" />
     <None Include="$(PayloadDirectory)/runner/labtest.deps.json" Pack="true" PackagePath="tools/runner/" />
     <None Include="$(PayloadDirectory)/runner/labtest.runtimeconfig.json" Pack="true" PackagePath="tools/runner/" />
+    <None Include="$(PayloadDirectory)/runner/CommandLine.dll" Pack="true" PackagePath="tools/runner/" />
     <None Include="build/LabTesting.props" Pack="true" PackagePath="build/" />
     <None Include="build/LabTesting.targets" Pack="true" PackagePath="build/" />
     <None Include="../scripts/cleanup.py" Pack="true" PackagePath="tools/" />

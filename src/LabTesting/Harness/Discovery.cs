@@ -30,6 +30,8 @@ public sealed class TestCase
         Seed = method.GetCustomAttribute<SeedAttribute>()?.Seed;
         Skip = method.GetCustomAttribute<FactAttribute>()?.Skip
                ?? method.GetCustomAttribute<TheoryAttribute>()?.Skip;
+        Traits = [.. fixture.GetCustomAttributes<TraitAttribute>(inherit: true),
+            .. method.GetCustomAttributes<TraitAttribute>(inherit: true)];
     }
 
     /// <summary>
@@ -88,6 +90,12 @@ public sealed class TestCase
     /// or by plan validation.
     /// </summary>
     public string? Skip { get; internal set; }
+
+    /// <summary>
+    /// Gets the name/value tags declared on the method and on its declaring class, including
+    /// inherited class-level tags.
+    /// </summary>
+    public IReadOnlyList<TraitAttribute> Traits { get; }
 }
 
 /// <summary>

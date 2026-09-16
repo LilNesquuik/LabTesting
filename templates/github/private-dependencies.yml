@@ -1,18 +1,91 @@
-# Use instead of labtesting.yml. Copy reusable workflow alongside this file.
-name: Plugin with private dependencies
+# Copy as .github/workflows/tests.yml instead of nuget-tests.yml. Adapt TEST_PROJECT,
+# DEPENDENCY_REPOSITORY, DEPENDENCY_REF (full commit SHA) and the dependency build command.
+name: Plugin tests
 on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
 jobs:
   integration:
-    uses: ./.github/workflows/labtesting-reusable.yml
-    with:
-      release-repository: YOUR-ORG/LabTesting
-      release-version: 0.2.0
-      archive-sha256: REPLACE_WITH_LINUX_ARCHIVE_SHA256
-      dependency-repository: YOUR-ORG/RequiredPlugin
-      dependency-ref: REPLACE_WITH_FULL_COMMIT_SHA
-      dependency-build-command: dotnet build .dependencies/source/src/RequiredPlugin -c Release
-      build-command: dotnet build examples/SamplePlugin.Tests -c Release -p:LabTestingPath="$GITHUB_WORKSPACE/.labtesting/harness/LabTesting.dll"
-    secrets:
-      DEPENDENCY_TOKEN: ${{ secrets.DEPENDENCY_TOKEN }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      TEST_PROJECT: tests/MonPlugin.Tests/MonPlugin.Tests.csproj
+      DEPENDENCY_REPOSITORY: YOUR-ORG/RequiredPlugin
+      DEPENDENCY_REF: REPLACE_WITH_FULL_COMMIT_SHA
+      SL_REFERENCES: ${{ github.workspace }}/.server/SCPSL_Data/Managed
+      EXILED_REFERENCES: ${{ github.workspace }}/.server/SCPSL_Data/Managed
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Check private dependency access
+        env:
+          TOKEN: ${{ secrets.DEPENDENCY_TOKEN }}
+          FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork }}
+        run: |
+          if [ "$FORK" = true ] || [ -z "$TOKEN" ]; then
+            echo "::error::Private dependencies unavailable. Fork PRs do not receive secrets; this required suite cannot pass."
+            exit 1
+          fi
+      - name: Install native prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lib32gcc-s1 lib32stdc++6 libatomic1 libgomp1 libglu1-mesa libxcursor1 libxrandr2 libxi6 libasound2t64 util-linux
+      - name: Install dedicated server 996560
+        run: |
+          steam="$RUNNER_TEMP/steamcmd"
+          mkdir -p "$steam"
+          curl --fail --location --retry 3 https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz -o "$steam/steamcmd.tar.gz"
+          tar -xzf "$steam/steamcmd.tar.gz" -C "$steam"
+          # A fresh SteamCMD self-updates on its first run and exits before applying app_update,
+          # and app_update itself fails transiently after login. Warm it up, then retry.
+          "$steam/steamcmd.sh" +quit >/dev/null || true
+          for attempt in 1 2 3; do
+            "$steam/steamcmd.sh" +login anonymous +force_install_dir "$GITHUB_WORKSPACE/.server" +app_update 996560 validate +quit || true
+            test -f "$SL_REFERENCES/Assembly-CSharp.dll" && break
+            echo "SteamCMD attempt $attempt installed nothing." >&2
+            sleep 15
+          done
+          test -f "$SL_REFERENCES/Assembly-CSharp.dll"
+      - name: Fetch private dependency at fixed ref
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.DEPENDENCY_REPOSITORY }}
+          ref: ${{ env.DEPENDENCY_REF }}
+          token: ${{ secrets.DEPENDENCY_TOKEN }}
+          path: .dependencies/source
+          persist-credentials: false
+      # If the dependency was built against the game's assemblies (a HintPath to its
+      # mscorlib/netstandard/System), this job needs windows-latest instead — see
+      # docs/github-actions.md.
+      - name: Build the dependency
+        run: dotnet build .dependencies/source/src/RequiredPlugin -c Release
+      - name: Restore, build and test
+        timeout-minutes: 12
+        run: |
+          dotnet build "$TEST_PROJECT" -c Release -t:LabTesting \
+            -p:LabTestingServer="$GITHUB_WORKSPACE/.server" \
+            -p:LabTestingReports="$GITHUB_WORKSPACE/TestResults" \
+            -p:LabTestingWork="$GITHUB_WORKSPACE/.labtest-work" \
+            -p:LabTestingTimeout=600
+      - name: Publish summary
+        if: always()
+        run: |
+          if [ -d TestResults ]; then
+            find TestResults -name summary.md -type f -exec cat {} \; >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: labtesting-results
+          path: TestResults/
+          if-no-files-found: warn
+      - name: Recover interrupted runs
+        if: always()
+        run: |
+          if [ -f "$(dirname "$TEST_PROJECT")/obj/project.assets.json" ]; then
+            dotnet msbuild "$TEST_PROJECT" -t:LabTestingCleanup -p:LabTestingWork="$GITHUB_WORKSPACE/.labtest-work"
+          fi

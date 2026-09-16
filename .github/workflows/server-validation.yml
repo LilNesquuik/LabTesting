@@ -77,9 +77,11 @@ jobs:
           New-Item -ItemType Directory -Force -Path .labtesting/harness | Out-Null
           Copy-Item src/LabTesting/bin/Release/net48/LabTesting.dll,src/LabTesting/bin/Release/net48/0Harmony.dll .labtesting/harness
       - name: Discover external suite
-        run: dotnet run --project src/LabTesting.Runner -c Release --no-build -- list --config examples/labtesting.json
+        shell: pwsh
+        run: dotnet run --project src/LabTesting.Runner -c Release --no-build -- list --config examples/labtesting.json --server "$env:GITHUB_WORKSPACE/.server"
       - name: Run external suite
-        run: dotnet run --project src/LabTesting.Runner -c Release --no-build -- run --config examples/labtesting.json
+        shell: pwsh
+        run: dotnet run --project src/LabTesting.Runner -c Release --no-build -- run --config examples/labtesting.json --server "$env:GITHUB_WORKSPACE/.server"
       - name: Run framework suite
         shell: pwsh
         run: dotnet run --project src/LabTesting.Runner -c Release --no-build -- run --config examples/framework.json --server "$env:GITHUB_WORKSPACE/.server"

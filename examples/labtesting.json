@@ -1,5 +1,4 @@
 {
-  "server": "../.server",
   "harness": "../.labtesting/harness/LabTesting.dll",
   "tests": ["SamplePlugin.Tests/bin/Release/net48/SamplePlugin.Tests.dll"],
   "plugins": ["SamplePlugin/bin/Release/net48/SamplePlugin.dll"],

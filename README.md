@@ -7,7 +7,7 @@ Windows and Linux x64.
 A single `PackageReference` in the net48 test project:
 
 ```xml
-<PackageReference Include="LabTesting" Version="0.2.0" PrivateAssets="all" />
+<PackageReference Include="LabTesting" Version="0.3.0" PrivateAssets="all" />
 ```
 
 ```sh
@@ -15,8 +15,7 @@ dotnet build tests/MyPlugin.Tests -c Release -t:LabTesting
 ```
 
 The NuGet restore installs the harness, Harmony, the runner and the MSBuild
-targets at the same version. Standalone archives remain available for an
-installation without NuGet: `.labtesting/runner/labtest run --config examples/labtesting.json`.
+targets at the same version.
 
 - [Integrating from an empty repository](docs/integration.md)
 - [Configuration, isolation and protocol](docs/runner.md)
@@ -45,13 +44,14 @@ The net48 assemblies only build on Windows: the game's `Managed` directory ships
 none of the .NET Framework facades, and a Linux machine has no targeting pack to
 fall back on. Those Windows-built DLLs are the ones executed on Linux, which is
 where every production SCP:SL server runs. The constraint is specific to this
-harness — an ordinary net48 plugin test project builds fine on Linux.
+harness — an ordinary net48 plugin test project builds fine on Linux, unless one
+of its own dependencies is itself HintPath'd against the game's assemblies (see
+[GitHub Actions and private dependencies](docs/github-actions.md)).
 
-**Status**: builds, standalone archives and real runs on Windows and Ubuntu 24.04
-are validated — 4 sample plugin tests and 12 framework tests on each system. The
-NuGet package is validated on both systems from a clean cache (restore, build,
-discovery and 4/4 real tests), locally and on GitHub runners. See the detailed
-record.
+**Status**: builds and real runs on Windows and Ubuntu 24.04 are validated — 4
+sample plugin tests and 12 framework tests on each system. The NuGet package is
+validated on both systems from a clean cache (restore, build, discovery and 4/4
+real tests), locally and on GitHub runners. See the detailed record.
 
 ## License
 

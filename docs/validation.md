@@ -168,7 +168,11 @@ Remaining steps:
   `windows-latest` and run the resulting DLLs on both systems.
   **This does not affect consuming plugins**: an ordinary net48 test project builds
   fine on Linux, as `examples/NuGetPlugin.Tests` proves in the `nuget-release.yml`
-  matrix.
+  matrix. It does affect a plugin whose own private dependency was itself built
+  against the game's assemblies (a `HintPath` to the game's `mscorlib` for type
+  identity): that dependency's build hits the exact same `Microsoft.NETFramework.ReferenceAssemblies`
+  collision on Linux and needs `windows-latest` too — observed in the wild in a
+  consumer's private dependency, see [github-actions.md](github-actions.md).
 - The harness is built against the Windows server's `Managed` directory and then
   loaded by the Linux server's. 123 of the 140 shared DLLs differ byte for byte —
   separate Unity builds — with no API difference observed so far. Since the harness

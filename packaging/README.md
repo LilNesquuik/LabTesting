@@ -13,18 +13,24 @@ against another version, so a mismatch now fails the restore instead of the run.
 In the net48 test project:
 
 ```xml
-<PackageReference Include="LabTesting" Version="0.2.0" PrivateAssets="all" />
+<PackageReference Include="LabTesting" Version="0.3.0" PrivateAssets="all" />
 ```
 
 Pin the published version you chose. The NuGet restore installs the whole
 framework and keeps harness and runner at the same version. No EXE to copy, no
 dotnet-tools.json to maintain.
 
-Put labtesting.json at the repository root, or next to the test project:
+```sh
+dotnet build tests/MyPlugin.Tests -c Release -t:LabTestingInit
+```
+
+scaffolds `labtesting.json` and a GitHub Actions workflow at the repository
+root, from the test project's own `ProjectReference` entries — wherever they
+live, `src/` or not. Refuses to overwrite either file. Or write labtesting.json
+at the repository root, or next to the test project, by hand:
 
 ```json
 {
-  "server": ".server",
   "plugins": ["src/MyPlugin/bin/Release/net48/MyPlugin.dll"],
   "dependencies": [],
   "reports": "TestResults",
@@ -32,6 +38,10 @@ Put labtesting.json at the repository root, or next to the test project:
   "port": 7799
 }
 ```
+
+`server` is optional: when absent, the runner looks for a Steam install of the
+dedicated server (app 996560) at its default location. Set it, or pass
+`LabTestingServer`, when there is none or CI installs its own copy.
 
 The package supplies the harness, Harmony and the test project's own assembly.
 Do not redeclare them in the JSON. Required plugins and their other dependencies

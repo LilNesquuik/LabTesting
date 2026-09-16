@@ -126,6 +126,7 @@ internal static class SelfTest
         }
         finally { Deployment.DeleteOwned(reports); }
         CheckProcessTree(ref failures);
+        CheckSteamServer(ref failures);
 
         Verdict truncated = Verdict.Parse([passed]);
         Check(ref failures, "no summary", false, truncated.HasSummary);
@@ -162,6 +163,30 @@ internal static class SelfTest
             start.ArgumentList.Add(typeof(SelfTest).Assembly.Location);
         start.ArgumentList.Add(argument);
         return start;
+    }
+
+    private static void CheckSteamServer(ref int failures)
+    {
+        string root = Path.Combine(Path.GetTempPath(), "labtest-selftest-steam-" + Guid.NewGuid().ToString("N"));
+        string library = Path.Combine(root, "library");
+        string common = Path.Combine(library, "steamapps", "common", "SCP Secret Laboratory Dedicated Server");
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(common, "SCPSL_Data", "Managed"));
+            File.WriteAllText(Path.Combine(common, "SCPSL_Data", "Managed", "Assembly-CSharp.dll"), "");
+            File.WriteAllText(Path.Combine(library, "steamapps", "appmanifest_996560.acf"),
+                "\"AppState\"\n{\n\t\"installdir\"\t\"SCP Secret Laboratory Dedicated Server\"\n}\n");
+            Check(ref failures, "steam server found via appmanifest", common, SteamServer.Locate([library]));
+
+            string indirect = Path.Combine(root, "indirect");
+            Directory.CreateDirectory(Path.Combine(indirect, "steamapps"));
+            File.WriteAllText(Path.Combine(indirect, "steamapps", "libraryfolders.vdf"),
+                "\"libraryfolders\"\n{\n\t\"0\"\n\t{\n\t\t\"path\"\t\"" + library.Replace("\\", "\\\\") + "\"\n\t}\n}\n");
+            Check(ref failures, "steam server found via libraryfolders.vdf", common, SteamServer.Locate([indirect]));
+
+            Check(ref failures, "no server without a matching manifest", null, SteamServer.Locate([root]));
+        }
+        finally { Directory.Delete(root, true); }
     }
 
     private static void CheckProcessTree(ref int failures)

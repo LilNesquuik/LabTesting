@@ -112,6 +112,8 @@ internal static class Deployment
             new XElement("assemblies", c.Assemblies.Select(p => new XElement("name", p))),
             new XElement("collections", c.Collections.Select(p => new XElement("name", p))),
             new XElement("testNames", c.TestNames.Select(p => new XElement("name", p))),
+            new XElement("traits", c.Traits.Select(p => new XElement("name", p))),
+            new XElement("excludeTraits", c.ExcludeTraits.Select(p => new XElement("name", p))),
             new XElement("plugins", c.Plugins.Select(p => new XElement("name", AssemblyName.GetAssemblyName(p).Name))));
         request.Save(Path.Combine(config, "labtesting-suite.xml"));
         File.WriteAllText(Path.Combine(reports, "deployment.json"), JsonSerializer.Serialize(manifest, Options.Json));

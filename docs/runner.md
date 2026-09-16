@@ -3,24 +3,44 @@
 ## Interface
 
 ```text
-labtest run|list --config labtesting.json
+labtest run|list [--config labtesting.json]
   --server DIR              source installation
   --server-executable FILE  explicit native binary (relative to server, or absolute)
   --port N                  UDP/TCP, 1..65535
   --timeout N               seconds, 1..86400
   --reports DIR             parent of the persistent reports
   --work DIR                parent of the temporary copies
-  --assembly NAME           exact filter, repeatable
-  --collection NAME         exact filter, repeatable
-  --test ID                 exact filter, repeatable
+  --assembly NAME [NAME...]      exact filter
+  --collection NAME [NAME...]    exact filter
+  --test ID [ID...]              exact filter
+  --trait NAME=VALUE [...]       exact filter
+  --exclude-trait NAME=VALUE [...]  drops any match
   --framework-tests         adds the framework's own tests
   --fail-on-skipped
   --keep                    keeps the copy after the run
+labtest init [--test-project FILE]
 labtest --selftest
 ```
 
-`--plugin LabTesting.dll` is kept for framework suites launched without a JSON.
+`--config` is optional: when omitted, the runner walks up from the current
+directory looking for `labtesting.json`, the same rule the MSBuild targets
+already use, so `labtest run --collection X` works from any subdirectory of the
+project. The closest file wins. Parsed by
+[CommandLineParser](https://github.com/commandlineparser/commandline); `--help`
+on either verb lists every public option. `--framework-directory` and
+`--test-assembly` stay hidden from it: the NuGet targets pass them, not a user.
 `--force` was removed: no existing file may be overwritten.
+
+`labtest init` scaffolds `labtesting.json` and `.github/workflows/tests.yml` at
+the repository root (the nearest `.git` above the test project, or the current
+directory otherwise), refusing to overwrite either. `--test-project` names the
+net48 test `.csproj`; when omitted, it looks for exactly one net48 project that
+already references the LabTesting package (add the `PackageReference` first).
+`plugins` is filled from that project's own `<ProjectReference>` entries — their
+build output path, wherever they live, `src/` or not — so nothing needs to be
+told the repository's folder layout. Move a referenced library without a
+`Plugin` class from `plugins` to `dependencies` afterwards. `-t:LabTestingInit`
+runs it through MSBuild with `--test-project` already filled in.
 Exit codes: **0** success; **1** assertion, test exception or refused skip;
 **2** runner, harness, protocol, timeout, crash or incomplete-verdict error.
 The server's own exit code is never enough to conclude success.
@@ -36,7 +56,7 @@ The lists hold explicit files, with no implicit globbing.
 
 | Field | Use |
 |---|---|
-| server, serverExecutable | Installation and native binary |
+| server, serverExecutable | Installation and native binary; server is optional locally, auto-detected from a Steam install of app 996560 |
 | harness | LabTesting.dll |
 | tests | Test libraries |
 | plugins | Plugin under test and required plugins |
@@ -46,6 +66,7 @@ The lists hold explicit files, with no implicit globbing.
 | assemblies | Simple names of the selected assemblies |
 | collections | Exact collection names |
 | testNames | Full identifiers as printed by list |
+| traits, excludeTraits | `name=value` tags; a class-level `[Trait]` applies to every method in it, including subclasses |
 | frameworkTests | false by default |
 | failOnSkipped | false by default; true recommended in CI |
 | port, timeoutSeconds, tickrate | 7777, 600, 60 by default |
@@ -55,6 +76,11 @@ Filters combine as an intersection; several values of one filter form a union.
 A filter matching nothing fails. Every selected external assembly must yield at
 least one test. To select a single assembly out of a set, also fill in
 `assemblies`.
+
+`[Trait("area", "commands")]` tags a method, or a whole class, with a free-form
+name/value pair; `--trait area=commands` keeps only matching tests, the same
+"each value must match something" rule as `--collection`/`--test`.
+`--exclude-trait` drops any match instead, silently when nothing carries it.
 
 Identifiers look like `Assembly:Namespace.Fixture.Method`. Theory rows carry an
 `(index)` suffix. Collisions on an identifier, on a destination (including
