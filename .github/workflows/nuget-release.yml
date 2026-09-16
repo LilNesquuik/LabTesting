@@ -52,7 +52,7 @@ jobs:
         run: |
           ./scripts/pack-nuget.ps1 -Version $env:PACKAGE_VERSION -Managed "$env:GITHUB_WORKSPACE/.server/SCPSL_Data/Managed" -RepositoryUrl $env:REPOSITORY_URL
       - name: Upload package and checksum
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nuget-package
           path: |
@@ -98,7 +98,7 @@ jobs:
           ./scripts/test-nuget-consumer.ps1 -PackageDirectory dist/nuget -Version $env:PACKAGE_VERSION -Managed "$env:GITHUB_WORKSPACE/.server/SCPSL_Data/Managed" -Server "$env:GITHUB_WORKSPACE/.server" -RunServer
       - name: Upload reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nuget-results-${{ matrix.os }}
           path: TestResults/
