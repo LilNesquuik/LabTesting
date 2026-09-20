@@ -8,6 +8,17 @@
         <LangVersion>13</LangVersion>
         <AssemblyName>labtest</AssemblyName>
         <RootNamespace>LabTesting.Runner</RootNamespace>
+        <!-- Packed separately from LabTesting.Package.csproj: this is `dotnet tool install`'s
+             package, not the MSBuild-integrated payload the plugin package embeds. -->
+        <PackAsTool>true</PackAsTool>
+        <ToolCommandName>labtest</ToolCommandName>
+        <PackageId>LabTesting.Tool</PackageId>
+        <Description>Command-line runner for LabTesting (in-process tests for LabAPI plugins on SCP:SL).</Description>
+        <Authors>LabTesting</Authors>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl Condition="'$(PackageProjectUrl)' == ''">https://github.com/LilNesquuik/LabTesting</PackageProjectUrl>
+        <RepositoryType>git</RepositoryType>
+        <Copyright>Copyright (c) 2026 Morgan Coyaux</Copyright>
     </PropertyGroup>
 
     <ItemGroup>

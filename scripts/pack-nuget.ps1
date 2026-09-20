@@ -62,6 +62,8 @@ Invoke-Dotnet @('pack', "$repository/packaging/LabTesting.Package.csproj", '-c',
     "-p:Version=$Version", "-p:PackageVersion=$Version", "-p:PayloadDirectory=$stage",
     "-p:RepositoryUrl=$RepositoryUrl", '-o', $outputRoot)
 & "$PSScriptRoot/verify-nuget.ps1" -Package $package -Version $Version
+Invoke-Dotnet @('pack', "$repository/src/LabTesting.Runner/LabTesting.Runner.csproj", '-c', 'Release',
+    "-p:Version=$Version", "-p:PackageVersion=$Version", "-p:RepositoryUrl=$RepositoryUrl", '-o', $outputRoot)
 (Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash.ToLowerInvariant() + '  ' +
     [IO.Path]::GetFileName($package) | Set-Content -LiteralPath "$package.sha256" -Encoding ascii
 Write-Output "NuGet ready: $package"
