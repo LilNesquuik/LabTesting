@@ -4,6 +4,22 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-09-21
+
+### Added
+
+- `LabTesting.Tool`, a companion NuGet package for `dotnet tool install --global LabTesting.Tool`,
+  so `labtest` is available as a plain global command without going through
+  MSBuild or the plugin package.
+
+### Changed
+
+- Documentation moved out of `docs/` and onto the GitHub wiki: Getting
+  Started, Writing Tests, Configuration Reference, Continuous Integration,
+  Troubleshooting and Compatibility, each with runnable JSON/C# examples.
+  `docs/validation.md`, an internal validation log, is dropped rather than
+  carried forward — it documented past CI runs, not how to use the project.
+
 ## [0.3.0] - 2026-09-16
 
 **Breaking.** The standalone archive distribution is removed: NuGet is now the
@@ -102,6 +118,7 @@ First published release.
 - JSONL, JUnit and Markdown reports, kept even after a crash or a timeout.
 - MIT license, declared in the package metadata.
 
+[0.4.0]: https://github.com/LilNesquuik/LabTesting/releases/tag/v0.4.0
 [0.3.0]: https://github.com/LilNesquuik/LabTesting/releases/tag/v0.3.0
 [0.2.0]: https://github.com/LilNesquuik/LabTesting/releases/tag/v0.2.0
 [0.1.0]: https://github.com/LilNesquuik/LabTesting/releases/tag/v0.1.0

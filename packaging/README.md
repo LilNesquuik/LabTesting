@@ -13,7 +13,7 @@ against another version, so a mismatch now fails the restore instead of the run.
 In the net48 test project:
 
 ```xml
-<PackageReference Include="LabTesting" Version="0.3.0" PrivateAssets="all" />
+<PackageReference Include="LabTesting" Version="0.4.0" PrivateAssets="all" />
 ```
 
 Pin the published version you chose. The NuGet restore installs the whole
