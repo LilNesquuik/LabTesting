@@ -1,10 +1,12 @@
 <Solution>
-  <Folder Name="/docs/">
-    <File Path="docs/github-actions.md" />
-    <File Path="docs/integration.md" />
-    <File Path="docs/releases.md" />
-    <File Path="docs/runner.md" />
-    <File Path="docs/validation.md" />
+  <Folder Name="/wiki/">
+    <File Path="wiki/Home.md" />
+    <File Path="wiki/Getting-Started.md" />
+    <File Path="wiki/Writing-Tests.md" />
+    <File Path="wiki/Configuration-Reference.md" />
+    <File Path="wiki/Continuous-Integration.md" />
+    <File Path="wiki/Troubleshooting.md" />
+    <File Path="wiki/Compatibility.md" />
   </Folder>
   <Folder Name="/examples/">
     <Project Path="examples/SamplePlugin/SamplePlugin.csproj" />

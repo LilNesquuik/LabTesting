@@ -60,7 +60,7 @@ jobs:
           persist-credentials: false
       # If the dependency was built against the game's assemblies (a HintPath to its
       # mscorlib/netstandard/System), this job needs windows-latest instead — see
-      # docs/github-actions.md.
+      # the wiki's Continuous-Integration page.
       - name: Build the dependency
         run: dotnet build .dependencies/source/src/RequiredPlugin -c Release
       - name: Restore, build and test

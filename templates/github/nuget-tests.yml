@@ -42,7 +42,7 @@ jobs:
       # Add dependency fetch/build steps here when the tested plugin needs them.
       # If a dependency was built against the game's assemblies (a HintPath to its
       # mscorlib/netstandard/System), this job needs windows-latest instead — see
-      # docs/github-actions.md.
+      # the wiki's Continuous-Integration page.
       - name: Restore, build and test
         timeout-minutes: 12
         run: |

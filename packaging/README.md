@@ -20,6 +20,9 @@ Pin the published version you chose. The NuGet restore installs the whole
 framework and keeps harness and runner at the same version. No EXE to copy, no
 dotnet-tools.json to maintain.
 
+Prefer a standalone CLI over MSBuild? `dotnet tool install --global LabTesting.Tool`
+installs `labtest` globally instead.
+
 ```sh
 dotnet build tests/MyPlugin.Tests -c Release -t:LabTestingInit
 ```
