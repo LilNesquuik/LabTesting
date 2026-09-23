@@ -32,7 +32,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Sample build failed' }
           dotnet build tests/FailureSuite -c Release
           if ($LASTEXITCODE -ne 0) { throw 'Failure suite build failed' }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: net48-assemblies
           path: |
@@ -94,7 +94,7 @@ jobs:
           exit 0
       - name: Upload reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: server-results-${{ matrix.os }}
           path: TestResults/
