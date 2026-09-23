@@ -28,7 +28,7 @@ jobs:
         with:
           ref: ${{ github.event.release.tag_name || github.ref }}
           persist-credentials: false
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
       - name: Resolve version
@@ -72,7 +72,7 @@ jobs:
         with:
           ref: ${{ github.event.release.tag_name || github.ref }}
           persist-credentials: false
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
       - uses: actions/download-artifact@v4
@@ -114,7 +114,7 @@ jobs:
       packages: write
       id-token: write
     steps:
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
       - uses: actions/download-artifact@v4
