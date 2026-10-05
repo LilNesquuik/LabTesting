@@ -4,7 +4,34 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0] - 2026-09-21
+## [0.5.0] - 2026-10-05
+
+### Added
+
+- The package now defaults `SL_REFERENCES` for the test project's game
+  references: `<LabTestingServer>/SCPSL_Data/Managed` when a server is passed,
+  otherwise the default Steam install on Windows or Linux. An environment
+  variable of the same name still wins. Getting Started documents the
+  references a test project needs.
+- A wait started off the server main thread (`ConfigureAwait(false)`, or
+  `Expect`/`World` called inside `Task.Run`) now fails with an explicit
+  `InvalidOperationException` instead of racing the pump.
+
+### Fixed
+
+- `Seconds()` converted with the Update rate (`Application.targetFrameRate`)
+  while ticks count FixedUpdate. It now divides by the fixed timestep and
+  rounds up.
+
+### Changed
+
+- The harness build reads every game assembly from `SL_REFERENCES`;
+  `EXILED_REFERENCES` is no longer used by the framework itself (the consumer
+  CI templates still export it for plugins that rely on it).
+- Removed an unused optional `AccessAPI` reference from the harness project.
+- The README links to the published GitHub wiki.
+
+## 0.4.0 - 2026-09-21
 
 ### Added
 
@@ -20,7 +47,7 @@ All notable changes to this project are documented here. The format follows
   `docs/validation.md`, an internal validation log, is dropped rather than
   carried forward — it documented past CI runs, not how to use the project.
 
-## [0.3.0] - 2026-09-16
+## 0.3.0 - 2026-09-16
 
 **Breaking.** The standalone archive distribution is removed: NuGet is now the
 only supported way to install LabTesting. `scripts/package.ps1`,
@@ -48,7 +75,7 @@ template (it used to call the now-removed reusable workflow).
   (app 996560) when `--server`/`LabTestingServer` is not given.
 - `CommandLineParser` replaces the runner's hand-rolled argument parsing.
 
-## [0.2.0] - 2026-09-15
+## 0.2.0 - 2026-09-15
 
 **Breaking.** Runner stdout lines now carry a `[labtest]` prefix, `LabTestingList`
 included: read `labtesting-results.jsonl` or `junit.xml` instead of parsing stdout.
@@ -101,7 +128,7 @@ only warns (NU1608) and the mismatch still fails when LabAPI loads the plugin.
   at a throwaway NuGet cache it then deletes, which broke IDE resolution of
   `SamplePlugin` and left a ~100 MB directory behind on every run.
 
-## [0.1.0] - 2026-09-15
+## 0.1.0 - 2026-09-15
 
 First published release.
 
@@ -118,7 +145,4 @@ First published release.
 - JSONL, JUnit and Markdown reports, kept even after a crash or a timeout.
 - MIT license, declared in the package metadata.
 
-[0.4.0]: https://github.com/LilNesquuik/LabTesting/releases/tag/v0.4.0
-[0.3.0]: https://github.com/LilNesquuik/LabTesting/releases/tag/v0.3.0
-[0.2.0]: https://github.com/LilNesquuik/LabTesting/releases/tag/v0.2.0
-[0.1.0]: https://github.com/LilNesquuik/LabTesting/releases/tag/v0.1.0
+[0.5.0]: https://github.com/LilNesquuik/LabTesting/releases/tag/v0.5.0

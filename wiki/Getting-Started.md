@@ -27,7 +27,7 @@ Tests live in a **net48 class library** — not a `dotnet test` project,
 because that's what the game's own runtime (Mono) can load.
 
 ```xml
-<PackageReference Include="LabTesting" Version="0.3.0" PrivateAssets="all" />
+<PackageReference Include="LabTesting" Version="0.5.0" PrivateAssets="all" />
 ```
 
 Restoring it brings the harness, Harmony, the runner and the MSBuild targets
