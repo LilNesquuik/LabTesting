@@ -1,0 +1,8 @@
+{
+  "server": "../../.server",
+  "plugins": ["../SamplePlugin/bin/Release/net48/SamplePlugin.dll"],
+  "reports": "../../TestResults/nuget",
+  "work": "../../.labtest-work",
+  "port": 7794,
+  "timeoutSeconds": 120
+}

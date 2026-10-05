@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>13</LangVersion>
+    <LabTestingPath Condition="'$(LabTestingPath)' == ''">../../src/LabTesting/bin/Release/net48/LabTesting.dll</LabTestingPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../SamplePlugin/SamplePlugin.csproj" />
+    <Reference Include="LabTesting" HintPath="$(LabTestingPath)" />
+    <Reference Include="Assembly-CSharp" HintPath="$(SL_REFERENCES)/Assembly-CSharp.dll" />
+    <Reference Include="Mirror" HintPath="$(SL_REFERENCES)/Mirror.dll" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(SL_REFERENCES)/UnityEngine.CoreModule.dll" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,9 @@
+{
+  "harness": "../src/LabTesting/bin/Release/net48/LabTesting.dll",
+  "dependencies": ["../src/LabTesting/bin/Release/net48/0Harmony.dll"],
+  "frameworkTests": true,
+  "port": 7798,
+  "timeoutSeconds": 180,
+  "work": "../.labtest-work",
+  "reports": "../TestResults"
+}

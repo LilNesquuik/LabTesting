@@ -1,0 +1,24 @@
+<Solution>
+  <Folder Name="/wiki/">
+    <File Path="wiki/Home.md" />
+    <File Path="wiki/Getting-Started.md" />
+    <File Path="wiki/Writing-Tests.md" />
+    <File Path="wiki/Configuration-Reference.md" />
+    <File Path="wiki/Continuous-Integration.md" />
+    <File Path="wiki/Troubleshooting.md" />
+    <File Path="wiki/Compatibility.md" />
+  </Folder>
+  <Folder Name="/examples/">
+    <Project Path="examples/SamplePlugin/SamplePlugin.csproj" />
+  </Folder>
+  <Folder Name="/packaging/">
+    <Project Path="packaging/LabTesting.Package.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/LabTesting.Runner/LabTesting.Runner.csproj" />
+    <Project Path="src/LabTesting/LabTesting.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FailureSuite/FailureSuite.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,10 @@
+{
+  "server": "../.server",
+  "harness": "../src/LabTesting/bin/Release/net48/LabTesting.dll",
+  "tests": ["FailureSuite/bin/Release/net48/FailureSuite.dll"],
+  "dependencies": ["../src/LabTesting/bin/Release/net48/0Harmony.dll"],
+  "port": 7796,
+  "timeoutSeconds": 120,
+  "reports": "../TestResults/failures",
+  "work": "../.labtest-work"
+}

@@ -1,0 +1,163 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net48</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>13</LangVersion>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+    
+    <!-- Fall back to the dedicated server's Managed folder when SL_REFERENCES is not set, so the
+         repository builds without any prior setup. -->
+    <PropertyGroup>
+        <ManagedFallback>$(ProgramFiles) (x86)\Steam\steamapps\common\SCP Secret Laboratory Dedicated Server\SCPSL_Data\Managed</ManagedFallback>
+        <ManagedFallback Condition="!Exists('$(ManagedFallback)')">C:\Program Files (x86)\Steam\steamapps\common\SCP Secret Laboratory Dedicated Server\SCPSL_Data\Managed</ManagedFallback>
+        <SL_REFERENCES Condition="'$(SL_REFERENCES)' == ''">$(ManagedFallback)</SL_REFERENCES>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Reference Include="System.Xml.Linq" />
+        <Reference Include="Assembly-CSharp" HintPath="$(SL_REFERENCES)\Assembly-CSharp.dll" Publicize="true" />
+        <Reference Include="Assembly-CSharp-firstpass" HintPath="$(SL_REFERENCES)\Assembly-CSharp-firstpass.dll" />
+        <Reference Include="BouncyCastle.Cryptography" HintPath="$(SL_REFERENCES)\BouncyCastle.Cryptography.dll" />
+        <Reference Include="CommandSystem.Core" HintPath="$(SL_REFERENCES)\CommandSystem.Core.dll" />
+        <Reference Include="Pooling" HintPath="$(SL_REFERENCES)\Pooling.dll" />
+        <Reference Include="Microsoft.CSharp" />
+        <Reference Include="Mirror" HintPath="$(SL_REFERENCES)\Mirror.dll" />
+        <Reference Include="Mono.Security" HintPath="$(SL_REFERENCES)\Mono.Security.dll" />
+        <Reference Include="mscorlib" HintPath="$(SL_REFERENCES)\mscorlib.dll" />
+        <Reference Include="netstandard">
+            <HintPath>$(SL_REFERENCES)\netstandard.dll</HintPath>
+        </Reference>
+        <Reference Include="NorthwoodLib">
+            <HintPath>$(SL_REFERENCES)\NorthwoodLib.dll</HintPath>
+        </Reference>
+        <Reference Include="System">
+            <HintPath>$(SL_REFERENCES)\System.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Collections">
+            <HintPath>$(SL_REFERENCES)\System.Collections.dll</HintPath>
+        </Reference>
+        <Reference Include="System.ComponentModel.DataAnnotations">
+            <HintPath>$(SL_REFERENCES)\System.ComponentModel.DataAnnotations.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Configuration">
+            <HintPath>$(SL_REFERENCES)\System.Configuration.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Core">
+            <HintPath>$(SL_REFERENCES)\System.Core.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Diagnostics.Debug">
+            <HintPath>$(SL_REFERENCES)\System.Diagnostics.Debug.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Diagnostics.StackTrace">
+            <HintPath>$(SL_REFERENCES)\System.Diagnostics.StackTrace.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Globalization">
+            <HintPath>$(SL_REFERENCES)\System.Globalization.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Globalization.Extensions">
+            <HintPath>$(SL_REFERENCES)\System.Globalization.Extensions.dll</HintPath>
+        </Reference>
+        <Reference Include="System.IO.Compression">
+            <HintPath>$(SL_REFERENCES)\System.IO.Compression.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Linq">
+            <HintPath>$(SL_REFERENCES)\System.Linq.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Net.Http">
+            <HintPath>$(SL_REFERENCES)\System.Net.Http.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Net.Primitives">
+            <HintPath>$(SL_REFERENCES)\System.Net.Primitives.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Runtime">
+            <HintPath>$(SL_REFERENCES)\System.Runtime.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Runtime.Extensions">
+            <HintPath>$(SL_REFERENCES)\System.Runtime.Extensions.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Runtime.Serialization">
+            <HintPath>$(SL_REFERENCES)\System.Runtime.Serialization.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Runtime.Serialization.Xml">
+            <HintPath>$(SL_REFERENCES)\System.Runtime.Serialization.Xml.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Text.RegularExpressions">
+            <HintPath>$(SL_REFERENCES)\System.Text.RegularExpressions.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Threading">
+            <HintPath>$(SL_REFERENCES)\System.Threading.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Threading.Tasks">
+            <HintPath>$(SL_REFERENCES)\System.Threading.Tasks.dll</HintPath>
+        </Reference>
+        <Reference Include="System.Xml">
+            <HintPath>$(SL_REFERENCES)\System.Xml.dll</HintPath>
+        </Reference>
+        <Reference Include="Unity.TextMeshPro">
+            <HintPath>$(SL_REFERENCES)\Unity.TextMeshPro.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine">
+            <HintPath>$(SL_REFERENCES)\UnityEngine.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.AnimationModule">
+            <HintPath>$(SL_REFERENCES)\UnityEngine.AnimationModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.AudioModule">
+            <HintPath>$(SL_REFERENCES)\UnityEngine.AudioModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.CoreModule">
+            <HintPath>$(SL_REFERENCES)\UnityEngine.CoreModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.DirectorModule">
+            <HintPath>$(SL_REFERENCES)\UnityEngine.DirectorModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.IMGUIModule">
+            <HintPath>$(SL_REFERENCES)\UnityEngine.IMGUIModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.InputLegacyModule">
+            <HintPath>$(SL_REFERENCES)\UnityEngine.InputLegacyModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.ParticleSystemModule">
+            <HintPath>$(SL_REFERENCES)\UnityEngine.ParticleSystemModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.Physics2DModule">
+            <HintPath>$(SL_REFERENCES)\UnityEngine.Physics2DModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.PhysicsModule">
+            <HintPath>$(SL_REFERENCES)\UnityEngine.PhysicsModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.ScreenCaptureModule">
+            <HintPath>$(SL_REFERENCES)\UnityEngine.ScreenCaptureModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.SharedInternalsModule">
+            <HintPath>$(SL_REFERENCES)\UnityEngine.SharedInternalsModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.TextRenderingModule">
+            <HintPath>$(SL_REFERENCES)\UnityEngine.TextRenderingModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.UI">
+            <HintPath>$(SL_REFERENCES)\UnityEngine.UI.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.UIModule">
+            <HintPath>$(SL_REFERENCES)\UnityEngine.UIModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.UnityWebRequestAudioModule">
+            <HintPath>$(SL_REFERENCES)\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.UnityWebRequestModule">
+            <HintPath>$(SL_REFERENCES)\UnityEngine.UnityWebRequestModule.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Lib.Harmony" Version="2.3.6" />
+        <PackageReference Include="Northwood.LabAPI" Version="1.1.7" />
+        <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.2" PrivateAssets="all" />
+    </ItemGroup>
+    
+</Project>
